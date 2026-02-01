@@ -4,17 +4,197 @@ You are an expert Payload CMS developer. When working with Payload projects, fol
 
 ## Core Principles
 
-1. **TypeScript-First**: Always use TypeScript with proper types from Payload
-2. **Security-Critical**: Follow all security patterns, especially access control
-3. **Type Generation**: Run `generate:types` script after schema changes
-4. **Transaction Safety**: Always pass `req` to nested operations in hooks
-5. **Access Control**: Understand Local API bypasses access control by default
-6. **Access Control**: Ensure roles exist when modifiyng collection or globals with access controls
+1. **Bun Runtime**: Always use Bun (never npm) - mandatory for consistency
+2. **TypeScript-First**: Always use TypeScript with proper types from Payload
+3. **Strict Null Safety**: Follow comprehensive null checking patterns (see TypeScript Best Practices)
+4. **Security-Critical**: Follow all security patterns, especially access control
+5. **Type Generation**: Run `generate:types` script after schema changes
+6. **Transaction Safety**: Always pass `req` to nested operations in hooks
+7. **Access Control**: Understand Local API bypasses access control by default
+8. **Access Control**: Ensure roles exist when modifying collection or globals with access controls
+9. **Media Manager**: Use field utilities from `@/lib/payload/fields/media` for all upload fields
+10. **Code Validation**: Always run `bun run build` before code is complete
+
+## Environment
+
+- **Runtime**: Bun (mandatory - never use npm)
+- **Package Manager**: Bun (use `bun` instead of npm/yarn/pnpm)
+- **Common Commands**:
+  - `bun run dev` - Start development server
+  - `bun run build` - Production build + type generation
+  - `bun run lint` - ESLint + TypeScript checks
+  - `bun run generate:types` - Generate Payload types
+  - `bun run generate:importmap` - Generate import map
 
 ### Code Validation
 
-- To validate typescript correctness after modifying code run `tsc --noEmit`
-- Generate import maps after creating or modifying components.
+```bash
+# Validate TypeScript
+bun run lint
+
+# Build with type checking
+bun run build
+
+# Generate types after schema changes
+bun run generate:types
+
+# Regenerate import map after component changes
+bun run generate:importmap
+```
+
+**Always run `bun run build` before considering code complete.**
+
+## TypeScript Best Practices
+
+### CRITICAL: Null Safety Rules
+
+Always check for null/undefined when working with browser APIs or optional properties:
+
+**❌ WRONG - TypeScript will error:**
+```typescript
+// 'window.visualViewport' is possibly 'null'
+const height = window.visualViewport.height
+
+// 'user.profile' is possibly 'undefined'
+const name = result.user.profile.name
+```
+
+**✅ CORRECT - Proper null checks:**
+```typescript
+// Store in variable after null check
+if (!window.visualViewport) return
+const visualViewport = window.visualViewport
+const height = visualViewport.height
+
+// Optional chaining
+const name = result.user?.profile?.name
+
+// Nullish coalescing with default
+const name = result.user?.profile?.name ?? 'Unknown'
+
+// Type guard with early return
+if (!result.user?.profile) return
+const name = result.user.profile.name
+```
+
+### Common Null Safety Patterns
+
+**1. Browser APIs (always check for null):**
+```typescript
+// window.visualViewport can be null
+if (typeof window === 'undefined' || !window.visualViewport) return
+const viewport = window.visualViewport
+
+// localStorage can be null in some browsers
+const data = typeof window !== 'undefined' && window.localStorage
+  ? localStorage.getItem('key')
+  : null
+
+// IntersectionObserver can be null
+if (!window.IntersectionObserver) return
+const observer = new IntersectionObserver(callback)
+```
+
+**2. Relationship Fields (Media, Products, etc.):**
+```typescript
+// Media can be string (ID) or object
+function isMediaObject(media: Media | string | null): media is Media {
+  return typeof media === 'object' && media !== null && 'url' in media
+}
+
+if (isMediaObject(result.image)) {
+  return <Image src={result.image.url} alt={result.image.alt || ''} />
+}
+
+// Product relationships
+const productName = typeof result.product === 'string'
+  ? result.product
+  : result.product?.name ?? 'Unknown'
+```
+
+**3. Optional DOM References:**
+```typescript
+// useRef can be null
+const inputRef = useRef<HTMLInputElement>(null)
+
+// Always check before using
+inputRef.current?.focus()
+inputRef.current?.scrollIntoView()
+
+// Or with guard
+if (inputRef.current) {
+  inputRef.current.value = ''
+}
+```
+
+**4. Array Operations:**
+```typescript
+// Array access can be undefined
+const firstItem = items[0] // Type: Item | undefined
+
+// Safe access
+const name = items[0]?.name ?? 'Default'
+
+// With type guard
+if (items.length > 0) {
+  const name = items[0].name // Now safe
+}
+```
+
+**5. Event Handlers:**
+```typescript
+// Event target can be null
+const handleClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null
+  if (!target) return
+
+  // Now safe to use target
+  target.classList.add('active')
+}
+```
+
+### TypeScript Configuration
+
+This project uses **strict TypeScript** settings:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,                      // Enable all strict checks
+    "noImplicitReturns": true,           // All code paths must return a value
+    "noFallthroughCasesInSwitch": true,  // Switch cases must have breaks
+    "noImplicitOverride": true           // Override must be explicit
+  }
+}
+```
+
+**What this means:**
+- All nullable types must be explicitly handled
+- No implicit `any` types allowed
+- Functions must return values on all code paths
+- Switch statements must be exhaustive
+- Proper null checking is enforced
+
+### Quick Reference: Null Safety Checklist
+
+Before writing code that accesses properties, ask:
+
+1. ✅ **Is this a browser API?** → Add null check
+2. ✅ **Is this an array access?** → Check length or use optional chaining
+3. ✅ **Is this a relationship field?** → Type guard or optional chaining
+4. ✅ **Is this a ref?** → Use `.current?.` or null check
+5. ✅ **Is this optional in the type?** → Use `?.` or provide default
+
+### Error Prevention Workflow
+
+When you see a TypeScript error:
+
+1. **Read the error carefully** - TypeScript tells you exactly what's wrong
+2. **Identify the nullable type** - Look at the variable's type
+3. **Add appropriate check** - Use patterns above
+4. **Verify with build** - Run `bun run build` to confirm
+
+**Always run `bun run build` before considering code complete.**
 
 ## Project Structure
 
@@ -22,13 +202,124 @@ You are an expert Payload CMS developer. When working with Payload projects, fol
 src/
 ├── app/
 │   ├── (frontend)/          # Frontend routes
-│   └── (payload)/           # Payload admin routes
-├── collections/             # Collection configs
-├── globals/                 # Global configs
-├── components/              # Custom React components
-├── hooks/                   # Hook functions
+│   │   ├── page.tsx         # Homepage
+│   │   └── api/             # Frontend API routes
+│   │       └── revalidate/  # On-demand ISR revalidation
+│   └── (payload)/           # CMS & API routes
+│       ├── admin/           # Payload admin UI (/admin)
+│       └── api/             # Payload REST/GraphQL APIs
+├── collections/             # Payload CMS collections
+├── globals/                 # Payload global configs
+├── components/              # React components (organized by domain)
+│   ├── ui/                  # Shared reusable UI components
+│   ├── admin/               # Custom admin components
+│   │   └── media-manager/   # Media Manager system
+│   └── layout/              # Header, footer, navigation
+├── lib/                     # Utilities and integrations
+│   ├── payload/             # Payload CMS utilities
+│   │   ├── fields/          # Field utilities (media.ts, etc.)
+│   │   └── access/          # Access control functions
+│   └── utils.ts             # General utilities (cn, etc.)
+├── hooks/                   # Custom React hooks (consolidated)
+├── types/                   # TypeScript type definitions
 ├── access/                  # Access control functions
-└── payload.config.ts        # Main config
+└── payload.config.ts        # Main Payload configuration
+```
+
+## Code Organization Principles
+
+### 1. Component Organization
+
+**CRITICAL: Never duplicate UI components in page-specific folders**
+
+```typescript
+// ❌ WRONG: Duplicating shared components in page folders
+src/app/(frontend)/[slug]/some-page/_components/ui/button.tsx  // DON'T DO THIS
+src/app/(frontend)/[slug]/some-page/_components/ui/card.tsx    // DON'T DO THIS
+
+// ✅ CORRECT: Use shared components from @/components/ui
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+```
+
+**Component hierarchy:**
+1. `@/components/ui/` - Shared, reusable UI primitives (Button, Card, Dialog, Input)
+2. `@/components/{domain}/` - Domain-specific components
+3. `page/_components/` - ONLY for truly page-specific, non-reusable components
+
+### 2. Import Patterns
+
+**Always use path aliases:**
+
+```typescript
+// ✅ Preferred imports
+import { Button, Card, Dialog } from '@/components/ui'
+import { useScrollAnimation } from '@/hooks'
+import { cn } from '@/lib/utils'
+import type { Media } from '@/payload-types'
+
+// ❌ Avoid relative imports across directories
+import Button from '../../../components/ui/button'
+```
+
+### 3. Barrel Exports
+
+**Every directory should have an index.ts barrel export:**
+
+```typescript
+// src/components/ui/index.ts
+export { Button } from './button'
+export { Card, CardHeader, CardContent } from './card'
+export { Dialog, DialogContent, DialogTitle } from './dialog'
+// ... etc
+```
+
+**Benefits:**
+- Cleaner imports: `import { Button, Card } from '@/components/ui'`
+- Easier refactoring
+- Clear public API for each module
+
+### 4. Integration Organization
+
+**Each integration should be self-contained in its own folder:**
+
+```
+lib/integration-name/      # ✅ Good: Well-organized integration
+├── index.ts               # Barrel export with documentation
+├── client.ts              # API client
+├── types.ts               # Type definitions
+├── queries.ts             # Queries (if applicable)
+└── operations.ts          # Core operations
+```
+
+**Rules for integrations:**
+- Single folder per integration (`lib/shopify/`, `lib/stripe/`)
+- Single API route prefix (`/api/integration-name/`)
+- Types co-located with implementation
+- Comprehensive barrel export
+
+### 5. Hooks Organization
+
+**All hooks live in `src/hooks/`:**
+
+```typescript
+// ✅ Correct: Import from centralized hooks
+import { useScrollAnimation } from '@/hooks'
+
+// ❌ Wrong: Page-specific hooks folder
+import { useAnimation } from '../_components/hooks/useAnimation'
+```
+
+**Exception:** Hooks with tightly-coupled page dependencies may remain page-local, but this should be rare.
+
+### 6. API Route Naming
+
+**Use kebab-case for all API routes:**
+
+```
+/api/integration-name/    ✅ Correct
+/api/integrationname/     ❌ Wrong (camelCase)
+/api/IntegrationName/     ❌ Wrong (PascalCase)
 ```
 
 ## Configuration
@@ -932,6 +1223,48 @@ function processField(field: Field) {
 }
 ```
 
+## Development Workflow
+
+### Starting Development
+
+```bash
+# Install dependencies
+bun install
+
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with your values
+
+# Start development
+bun run dev
+
+# Access points
+# App: http://localhost:3000
+# Admin: http://localhost:3000/admin
+# GraphQL: http://localhost:3000/api/graphql-playground
+```
+
+### Environment Variables
+
+```bash
+# Database
+DATABASE_URI=mongodb+srv://... # or postgresql://...
+
+# Payload CMS
+PAYLOAD_SECRET=your-secret-32-chars-minimum
+
+# Storage (if using cloud storage)
+S3_ACCESS_KEY_ID=your-key
+S3_SECRET_ACCESS_KEY=your-secret
+S3_ENDPOINT=https://...
+S3_BUCKET=your-bucket
+NEXT_PUBLIC_S3_PUBLIC_URL=https://...
+
+# Revalidation
+REVALIDATION_SECRET=your-revalidation-secret
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
 ## Plugins
 
 ### Using Plugins
@@ -1019,19 +1352,6 @@ export const myPlugin =
 3. Extract hooks to `hooks/` directory
 4. Use reusable field factories for common patterns
 5. Document complex access control with comments
-
-## Common Gotchas
-
-1. **Local API Default**: Access control bypassed unless `overrideAccess: false`
-2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity
-3. **Hook Loops**: Operations in hooks can trigger the same hooks
-4. **Field Access**: Cannot use query constraints, only boolean
-5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only
-6. **Draft Status**: `_status` field auto-injected when drafts enabled
-7. **Type Generation**: Types not updated until `generate:types` runs
-8. **MongoDB Transactions**: Require replica set configuration
-9. **SQLite Transactions**: Disabled by default, enable with `transactionOptions: {}`
-10. **Point Fields**: Not supported in SQLite
 
 ## Additional Context Files
 
@@ -1131,6 +1451,398 @@ For deeper exploration of specific topics, refer to the context files located in
     - Using hooks
     - Performance best practices
     - Styling components
+
+## Common Gotchas
+
+1. **Local API Default**: Access control bypassed unless `overrideAccess: false`
+2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity
+3. **Hook Loops**: Operations in hooks can trigger the same hooks
+4. **Field Access**: Cannot use query constraints, only boolean
+5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only
+6. **Type Generation**: Types auto-generate on build, not during dev
+7. **MongoDB Transactions**: Require replica set configuration
+8. **Revalidation**: Don't await fetch - use fire-and-forget pattern
+9. **Bun Only**: npm causes dependency conflicts - always use bun
+10. **Import Map**: Regenerate after adding/modifying components
+
+## Media Manager System
+
+This project includes a production-grade Media Manager ported from the KAWAI project. It provides comprehensive media management with folder organization, image editing, and advanced metadata.
+
+### Architecture
+
+The Media Manager consists of:
+
+1. **Enhanced Media Collection** (`src/collections/Media.ts`)
+2. **Field Utilities** (`src/lib/payload/fields/media.ts`)
+3. **Admin Components** (`src/components/admin/media-manager/`)
+4. **Global Provider** (`src/components/admin/AdminRootProvider.tsx`)
+
+### Using Media Field Utilities
+
+**ALWAYS use field utilities instead of raw upload fields:**
+
+```typescript
+import { imageField, videoField, mediaArrayField, responsiveImageGroup } from '@/lib/payload/fields/media'
+
+export const Products: CollectionConfig = {
+  slug: 'products',
+  fields: [
+    // ✅ CORRECT: Use imageField utility
+    imageField('featuredImage', {
+      required: true,
+      admin: {
+        description: 'Main product image (1200x800px recommended)',
+      },
+    }),
+
+    // ✅ Gallery array
+    mediaArrayField('gallery', {
+      minRows: 3,
+      maxRows: 12,
+      admin: {
+        description: 'Product image gallery',
+      },
+    }),
+
+    // ✅ Video upload
+    videoField('demoVideo', {
+      admin: {
+        description: 'Product demonstration video',
+      },
+    }),
+
+    // ✅ Responsive images
+    responsiveImageGroup('Hero Images'),
+
+    // ❌ WRONG: Don't use raw upload fields
+    // {
+    //   name: 'image',
+    //   type: 'upload',
+    //   relationTo: 'media',
+    // },
+  ],
+}
+```
+
+### Available Field Utilities
+
+1. **`mediaField(name, options)`** - Standard media upload with library selector
+2. **`imageField(name, options)`** - Image-only upload (filtered)
+3. **`videoField(name, options)`** - Video-only upload (filtered)
+4. **`mediaArrayField(name, options)`** - Array of media items for galleries
+5. **`responsiveImageGroup(label)`** - Desktop + mobile image group
+
+**Benefits:**
+- Automatic "📂 Browse Media Library" button integration
+- Consistent field configuration across collections
+- Built-in filtering (images only, videos only, etc.)
+- Cleaner, more maintainable code
+
+### Media Collection Fields
+
+The Media collection includes comprehensive metadata:
+
+**Basic Information:**
+- `alt` (required) - Alternative text for accessibility
+- `caption` - Display caption
+- `description` - Administrative description
+
+**Classification:**
+- `mediaType` - image | video | audio | document
+
+**Video Metadata (conditional):**
+- `videoMeta.duration` - Duration in seconds
+- `videoMeta.thumbnail` - Custom thumbnail upload
+- `videoMeta.autoplay` - Boolean
+- `videoMeta.muted` - Boolean
+
+**Responsive Variants (conditional for images):**
+- `variants.mobile` - Mobile-optimized upload
+- `variants.tablet` - Tablet-optimized upload
+- `variants.desktop` - Desktop-optimized upload
+- `variants.largeDesktop` - Large screen upload
+
+**SEO Metadata:**
+- `seoMeta.focusKeywords` - Keywords
+- `seoMeta.photographerCredit` - Attribution
+- `seoMeta.copyrightInfo` - Copyright/licensing
+- `seoMeta.originalSource` - External source URL
+
+**Organization:**
+- `featured` - Featured media flag
+- `tags` - Array of tags for categorization
+- `folder` - Folder organization (built-in Payload feature)
+
+### Media Manager Features
+
+**Upload Workflow:**
+1. Drag & drop files into the modal
+2. Images automatically open in editor
+3. Crop, rotate, adjust quality
+4. Add comprehensive metadata
+5. Upload to storage
+
+**Library Management:**
+- Folder organization with tree navigation
+- Search by filename or alt text
+- Pagination (24 items per page)
+- Copy public URLs
+- Edit metadata after upload
+- Move media between folders
+- Delete media
+
+**Dual-Mode Operation:**
+- **Browse Mode**: General library management (floating button)
+- **Select Mode**: Choose media for upload fields (via "Browse Media Library" button)
+
+### Accessing the Media Manager
+
+**From Upload Fields:**
+```typescript
+// Any field using imageField(), videoField(), or mediaField()
+// will have a "📂 Browse Media Library" button
+imageField('heroImage', { required: true })
+```
+
+**From Floating Action Button:**
+- Click the media icon in the bottom-right corner of the admin UI
+- Opens in browse mode for general library management
+
+**Programmatically (Client Components):**
+```typescript
+'use client'
+import { useMediaManager } from '@/components/admin/media-manager/MediaManagerProvider'
+
+export function MyComponent() {
+  const { openModal } = useMediaManager()
+
+  const handleClick = () => {
+    openModal({
+      mode: 'select',
+      onSelect: (media) => {
+        console.log('Selected:', media)
+      },
+    })
+  }
+
+  return <button onClick={handleClick}>Open Media Library</button>
+}
+```
+
+### Media Manager Components
+
+All components are in `src/components/admin/media-manager/`:
+
+- **MediaManagerProvider.tsx** - Context provider (state management)
+- **MediaManagerModal.tsx** - Full-screen modal UI
+- **MediaGrid.tsx** - Grid view with pagination
+- **FolderTree.tsx** - Hierarchical folder navigation
+- **ImageEditor.tsx** - Crop, rotate, quality controls
+- **MediaUploadMetadataForm.tsx** - Metadata entry form
+- **MediaEditPanel.tsx** - Edit existing media
+- **Toast.tsx** - Toast notifications
+- **MediaManagerButton.tsx** - Floating action button
+- **types.ts** - TypeScript definitions
+
+### Admin Integration
+
+The Media Manager is globally available via `AdminRootProvider`:
+
+```typescript
+// payload.config.ts
+export default buildConfig({
+  admin: {
+    components: {
+      providers: ['/components/admin/AdminRootProvider#AdminRootProvider'],
+    },
+  },
+})
+```
+
+This wraps the entire admin UI with:
+1. MediaManagerProvider context
+2. MediaManagerModal (rendered globally)
+3. MediaManagerButton (floating action button)
+
+### Best Practices
+
+**DO:**
+- ✅ Use field utilities (`imageField`, etc.) for all upload fields
+- ✅ Provide descriptive `admin.description` for upload fields
+- ✅ Use `mediaArrayField` for galleries
+- ✅ Set reasonable min/max rows for arrays
+- ✅ Use `responsiveImageGroup` for responsive images
+- ✅ Require alt text for accessibility
+
+**DON'T:**
+- ❌ Use raw upload fields (type: 'upload') directly
+- ❌ Skip the field utilities
+- ❌ Forget to regenerate types after Media collection changes
+- ❌ Create duplicate media upload interfaces
+
+### Storage Configuration
+
+**Current:** Local filesystem storage (`public/media`)
+
+**To Configure Cloudflare R2:**
+
+```bash
+bun add @payloadcms/storage-s3
+```
+
+```typescript
+// payload.config.ts
+import { s3Storage } from '@payloadcms/storage-s3'
+
+export default buildConfig({
+  plugins: [
+    s3Storage({
+      collections: {
+        media: {
+          prefix: 'media',
+          disablePayloadAccessControl: true,
+          generateFileURL: ({ filename, prefix }) => {
+            return `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix}/${filename}`
+          },
+        },
+      },
+      bucket: process.env.S3_BUCKET || '',
+      config: {
+        endpoint: process.env.S3_ENDPOINT,
+        region: 'auto',
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+        },
+        forcePathStyle: true, // Required for Cloudflare R2
+      },
+    }),
+  ],
+})
+```
+
+**Environment Variables:**
+```env
+S3_BUCKET=your-bucket-name
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret-key
+S3_ENDPOINT=https://account-id.r2.cloudflarestorage.com
+NEXT_PUBLIC_S3_PUBLIC_URL=https://pub-your-bucket.r2.dev
+```
+
+### Troubleshooting
+
+**Media Selector Button Not Appearing:**
+1. Verify you're using field utilities: `imageField()`, not raw `type: 'upload'`
+2. Regenerate import map: `bun run generate:importmap`
+3. Verify `AdminRootProvider` is in `payload.config.ts`
+4. Clear browser cache and restart dev server
+
+**TypeScript Errors:**
+```bash
+bun run generate:types
+```
+
+**Media Not Uploading:**
+- Check authentication (must be logged in)
+- Verify access control on Media collection
+- Check upload directory permissions (local storage)
+- Verify S3 credentials (if using R2)
+
+**Import Map Issues:**
+```bash
+bun run generate:importmap
+```
+
+### Migration Guide
+
+**Before (Raw Upload Fields):**
+```typescript
+{
+  name: 'featuredImage',
+  type: 'upload',
+  relationTo: 'media',
+  required: true,
+}
+```
+
+**After (Field Utilities):**
+```typescript
+import { imageField } from '@/lib/payload/fields/media'
+
+imageField('featuredImage', { required: true })
+```
+
+**Result:** Same functionality + "Browse Media Library" button + consistent configuration
+
+### Complete Example
+
+```typescript
+import type { CollectionConfig } from 'payload'
+import { imageField, mediaArrayField } from '@/lib/payload/fields/media'
+import { authenticated } from '@/access/authenticated'
+import { anyone } from '@/access/anyone'
+
+export const Portfolio: CollectionConfig = {
+  slug: 'portfolio',
+  access: {
+    read: anyone,
+    create: authenticated,
+    update: authenticated,
+    delete: authenticated,
+  },
+  fields: [
+    {
+      name: 'title',
+      type: 'text',
+      required: true,
+    },
+
+    // Hero image with media library selector
+    imageField('heroImage', {
+      required: true,
+      admin: {
+        description: 'Main portfolio image (1920x1080px recommended)',
+      },
+    }),
+
+    // Image gallery
+    mediaArrayField('gallery', {
+      minRows: 3,
+      maxRows: 20,
+      admin: {
+        description: 'Portfolio image gallery (drag to reorder)',
+      },
+    }),
+
+    // Optional video
+    videoField('showcaseVideo', {
+      admin: {
+        description: 'Optional video showcase',
+      },
+    }),
+  ],
+}
+```
+
+### API Routes Used
+
+The Media Manager uses standard Payload API routes:
+
+- `GET /api/media` - List media with filters/pagination
+- `POST /api/media` - Upload new media
+- `PATCH /api/media/:id` - Update media metadata
+- `DELETE /api/media/:id` - Delete media
+- `GET /api/payload-folders` - List folders
+- `POST /api/payload-folders` - Create folder
+- `DELETE /api/payload-folders/:id` - Delete folder
+
+These routes are automatically provided by Payload CMS.
+
+### Additional Documentation
+
+For complete integration details, see: `MEDIA_MANAGER_INTEGRATION.md`
 
 ## Resources
 

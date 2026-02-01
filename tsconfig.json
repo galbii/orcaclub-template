@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
     "baseUrl": ".",
     "esModuleInterop": true,
     "target": "ES2022",

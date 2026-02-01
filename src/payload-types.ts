@@ -270,27 +270,100 @@ export interface Post {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Media library for images, videos, and documents
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: string;
-  alt?: string | null;
-  caption?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  /**
+   * Alternative text for accessibility and SEO. Describe what the image shows.
+   */
+  alt: string;
+  /**
+   * Optional caption displayed with the image
+   */
+  caption?: string | null;
+  /**
+   * Detailed description for administrative purposes
+   */
+  description?: string | null;
+  /**
+   * Type of media for better organization
+   */
+  mediaType?: ('image' | 'video' | 'audio' | 'document') | null;
+  /**
+   * Video-specific metadata
+   */
+  videoMeta?: {
+    /**
+     * Video duration in seconds
+     */
+    duration?: number | null;
+    /**
+     * Custom thumbnail for the video
+     */
+    thumbnail?: (string | null) | Media;
+    /**
+     * Should this video autoplay (use sparingly)
+     */
+    autoplay?: boolean | null;
+    /**
+     * Start video muted (recommended for autoplay)
+     */
+    muted?: boolean | null;
+  };
+  /**
+   * Responsive image variants (generated automatically when uploaded)
+   */
+  variants?: {
+    /**
+     * Optimized for mobile devices (480px width)
+     */
+    mobile?: (string | null) | Media;
+    /**
+     * Optimized for tablets (768px width)
+     */
+    tablet?: (string | null) | Media;
+    /**
+     * Optimized for desktop (1200px width)
+     */
+    desktop?: (string | null) | Media;
+    /**
+     * Optimized for large screens (1920px width)
+     */
+    largeDesktop?: (string | null) | Media;
+  };
+  /**
+   * SEO and technical metadata
+   */
+  seoMeta?: {
+    /**
+     * Keywords this image relates to (comma-separated)
+     */
+    focusKeywords?: string | null;
+    /**
+     * Photo credit information
+     */
+    photographerCredit?: string | null;
+    /**
+     * Copyright or licensing information
+     */
+    copyrightInfo?: string | null;
+    /**
+     * Original source or URL if external
+     */
+    originalSource?: string | null;
+  };
+  /**
+   * Mark as featured media for easy access
+   */
+  featured?: boolean | null;
+  /**
+   * Tags for organization and search
+   */
+  tags?: string[] | null;
   folder?: (string | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
@@ -312,7 +385,7 @@ export interface Media {
       filesize?: number | null;
       filename?: string | null;
     };
-    square?: {
+    card?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -320,7 +393,7 @@ export interface Media {
       filesize?: number | null;
       filename?: string | null;
     };
-    small?: {
+    tablet?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -328,31 +401,7 @@ export interface Media {
       filesize?: number | null;
       filename?: string | null;
     };
-    medium?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    large?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    xlarge?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    og?: {
+    desktop?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -1224,6 +1273,34 @@ export interface PostsSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  description?: T;
+  mediaType?: T;
+  videoMeta?:
+    | T
+    | {
+        duration?: T;
+        thumbnail?: T;
+        autoplay?: T;
+        muted?: T;
+      };
+  variants?:
+    | T
+    | {
+        mobile?: T;
+        tablet?: T;
+        desktop?: T;
+        largeDesktop?: T;
+      };
+  seoMeta?:
+    | T
+    | {
+        focusKeywords?: T;
+        photographerCredit?: T;
+        copyrightInfo?: T;
+        originalSource?: T;
+      };
+  featured?: T;
+  tags?: T;
   folder?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1249,7 +1326,7 @@ export interface MediaSelect<T extends boolean = true> {
               filesize?: T;
               filename?: T;
             };
-        square?:
+        card?:
           | T
           | {
               url?: T;
@@ -1259,7 +1336,7 @@ export interface MediaSelect<T extends boolean = true> {
               filesize?: T;
               filename?: T;
             };
-        small?:
+        tablet?:
           | T
           | {
               url?: T;
@@ -1269,37 +1346,7 @@ export interface MediaSelect<T extends boolean = true> {
               filesize?: T;
               filename?: T;
             };
-        medium?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        large?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        xlarge?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        og?:
+        desktop?:
           | T
           | {
               url?: T;
