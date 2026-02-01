@@ -346,34 +346,23 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     }
   }, [state.searchQuery, state.currentFolder, transformMedia, showToast])
 
-  // Handle file selection - show editor for images
-  const handleFilesSelected = useCallback((files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-
-    // Filter to get image files for editing
-    const imageFiles = fileArray.filter(f => f.type.startsWith('image/'))
-    const otherFiles = fileArray.filter(f => !f.type.startsWith('image/'))
-
-    // If there are non-image files, upload them directly
-    if (otherFiles.length > 0) {
-      uploadFilesDirectly(otherFiles)
-    }
-
-    // If there are image files, queue them for editing
-    if (imageFiles.length > 0) {
-      const firstFile = imageFiles[0]
-      if (firstFile) {
-        setState(prev => ({
-          ...prev,
-          pendingFiles: imageFiles,
-          editingFile: firstFile,
-        }))
-      }
-    }
-  }, [])
-
   // Upload files directly without editing
   const uploadFilesDirectly = useCallback(async (files: File[]) => {
+    // Check authentication first
+    try {
+      const authCheck = await fetch('/api/users/me', { credentials: 'include' })
+      if (!authCheck.ok) {
+        showToast('error', 'Please log in to upload files')
+        setState(prev => ({ ...prev, error: 'Authentication required' }))
+        return
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      showToast('error', 'Authentication required. Please log in.')
+      setState(prev => ({ ...prev, error: 'Authentication required' }))
+      return
+    }
+
     setState(prev => ({ ...prev, isUploading: true, error: null }))
 
     const uploadPromises = files.map(async (file) => {
@@ -414,7 +403,20 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         // Log the actual error response for debugging
         const errorText = await response.text()
         console.error('❌ [UPLOAD] Upload failed for', file.name, ':', response.status, errorText)
-        throw new Error(`Failed to upload ${file.name}: ${response.statusText}`)
+
+        // Provide specific error messages based on status code
+        let userMessage = `Failed to upload ${file.name}`
+        if (response.status === 401 || response.status === 403) {
+          userMessage = 'Authentication required. Please log in to upload files.'
+        } else if (response.status === 413) {
+          userMessage = `File too large: ${file.name}. Please upload a smaller file.`
+        } else if (response.status === 415) {
+          userMessage = `Unsupported file type: ${file.name}`
+        } else if (response.status >= 500) {
+          userMessage = 'Server error. Please try again or contact support.'
+        }
+
+        throw new Error(userMessage)
       }
 
       const result = await response.json()
@@ -444,8 +446,57 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     }
   }, [fetchMedia, showToast, state.currentFolder])
 
+  // Handle file selection - show editor for images
+  const handleFilesSelected = useCallback((files: FileList | File[]) => {
+    console.log('🎯 [HANDLE FILES] Called with files:', files.length)
+    const fileArray = Array.from(files)
+
+    // Filter to get image files for editing
+    const imageFiles = fileArray.filter(f => f.type.startsWith('image/'))
+    const otherFiles = fileArray.filter(f => !f.type.startsWith('image/'))
+
+    console.log('🎯 [HANDLE FILES] Image files:', imageFiles.length, 'Other files:', otherFiles.length)
+
+    // If there are non-image files, upload them directly
+    if (otherFiles.length > 0) {
+      console.log('🎯 [HANDLE FILES] Uploading non-image files directly')
+      uploadFilesDirectly(otherFiles)
+    }
+
+    // If there are image files, queue them for editing
+    if (imageFiles.length > 0) {
+      const firstFile = imageFiles[0]
+      if (firstFile) {
+        console.log('🎯 [HANDLE FILES] Setting editingFile to:', firstFile.name)
+        setState(prev => {
+          console.log('🎯 [HANDLE FILES] Previous state - isOpen:', prev.isOpen, 'editingFile:', prev.editingFile?.name)
+          return {
+            ...prev,
+            pendingFiles: imageFiles,
+            editingFile: firstFile,
+          }
+        })
+      }
+    }
+  }, [uploadFilesDirectly])
+
   // Upload edited file and move to next in queue
   const uploadEditedFile = useCallback(async (file: File) => {
+    // Check authentication first
+    try {
+      const authCheck = await fetch('/api/users/me', { credentials: 'include' })
+      if (!authCheck.ok) {
+        showToast('error', 'Please log in to upload files')
+        setState(prev => ({ ...prev, error: 'Authentication required' }))
+        return
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      showToast('error', 'Authentication required. Please log in.')
+      setState(prev => ({ ...prev, error: 'Authentication required' }))
+      return
+    }
+
     setState(prev => ({ ...prev, isUploading: true }))
 
     try {
@@ -475,7 +526,18 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         // Log the actual error response for debugging
         const errorText = await response.text()
         console.error(`Upload failed for ${file.name}:`, response.status, errorText)
-        throw new Error(`Failed to upload ${file.name}: ${response.statusText}`)
+
+        // Provide specific error messages based on status code
+        let userMessage = `Failed to upload ${file.name}`
+        if (response.status === 401 || response.status === 403) {
+          userMessage = 'Authentication required. Please log in to upload files.'
+        } else if (response.status === 413) {
+          userMessage = `File too large: ${file.name}`
+        } else if (response.status === 415) {
+          userMessage = `Unsupported file type: ${file.name}`
+        }
+
+        throw new Error(userMessage)
       }
 
       // Move to next file in queue or close editor
@@ -528,6 +590,21 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
   // Upload file with metadata
   const uploadWithMetadata = useCallback(async (file: File, metadata: any) => {
+    // Check authentication first
+    try {
+      const authCheck = await fetch('/api/users/me', { credentials: 'include' })
+      if (!authCheck.ok) {
+        showToast('error', 'Please log in to upload files')
+        setState(prev => ({ ...prev, error: 'Authentication required' }))
+        return
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      showToast('error', 'Authentication required. Please log in.')
+      setState(prev => ({ ...prev, error: 'Authentication required' }))
+      return
+    }
+
     setState(prev => ({ ...prev, isUploading: true, metadataEditingFile: null }))
 
     try {
@@ -574,7 +651,18 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       if (!response.ok) {
         const errorText = await response.text()
         console.error('❌ [UPLOAD WITH METADATA] Upload failed for', file.name, ':', response.status, errorText)
-        throw new Error(`Failed to upload ${file.name}: ${response.statusText}`)
+
+        // Provide specific error messages based on status code
+        let userMessage = `Failed to upload ${file.name}`
+        if (response.status === 401 || response.status === 403) {
+          userMessage = 'Authentication required. Please log in to upload files.'
+        } else if (response.status === 413) {
+          userMessage = `File too large: ${file.name}`
+        } else if (response.status === 415) {
+          userMessage = `Unsupported file type: ${file.name}`
+        }
+
+        throw new Error(userMessage)
       }
 
       const result = await response.json()
@@ -593,6 +681,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
           isUploading: false,
           pendingFiles: remainingFiles,
           editingFile: remainingFiles[0] || null,
+          metadataEditingFile: null,
         }
       })
 
@@ -682,10 +771,17 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
   // Modal controls
   const openModal = useCallback((options?: import('./types').MediaManagerModalOptions) => {
-    console.log('[MediaManagerProvider] openModal called with options:', options)
+    console.log('[MediaManagerProvider] ========== openModal CALLED ==========')
+    console.log('[MediaManagerProvider] Options:', options)
+    console.log('[MediaManagerProvider] Current state.isOpen:', state.isOpen)
+
     setState(prev => {
-      console.log('[MediaManagerProvider] Setting isOpen to true, previous state:', prev.isOpen)
-      return { ...prev, isOpen: true, modalOptions: options || null }
+      console.log('[MediaManagerProvider] setState callback executing')
+      console.log('[MediaManagerProvider] Previous isOpen:', prev.isOpen)
+      const newState = { ...prev, isOpen: true, modalOptions: options || null }
+      console.log('[MediaManagerProvider] New isOpen:', newState.isOpen)
+      console.log('[MediaManagerProvider] ========== State Update Complete ==========')
+      return newState
     })
   }, [])
 
@@ -740,14 +836,14 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       fetchFolders()
       fetchMedia(1)
     }
-  }, [state.isOpen, fetchFolders])
+  }, [state.isOpen, fetchFolders, fetchMedia])
 
   // Refetch media when search query or current folder changes
   useEffect(() => {
     if (state.isOpen) {
       fetchMedia(1)
     }
-  }, [state.searchQuery, state.currentFolder, fetchMedia])
+  }, [state.searchQuery, state.currentFolder, state.isOpen, fetchMedia])
 
   const contextValue: ExtendedContextValue = {
     ...state,

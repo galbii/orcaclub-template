@@ -21,7 +21,7 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
-      // Admin Root Provider - wraps entire admin UI with Media Manager context
+      // Admin Root Provider - wraps entire admin UI with Media Manager context, modal, and button
       providers: ['/components/admin/AdminRootProvider#AdminRootProvider'],
     },
     importMap: {

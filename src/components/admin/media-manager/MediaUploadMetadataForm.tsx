@@ -151,36 +151,65 @@ export function MediaUploadMetadataForm({ file, onUpload, onCancel }: MediaUploa
 
   return (
     <div
-      className="fixed inset-0 z-[10003] flex items-center justify-center p-4 backdrop-blur-sm"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000002,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(8px)',
+      }}
     >
       <div
-        className="rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
-        style={{ backgroundColor: colors.white }}
+        style={{
+          backgroundColor: colors.white,
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          width: '100%',
+          maxWidth: '800px',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
       >
         {/* Header */}
         <div
-          className="flex-shrink-0 px-6 py-4 border-b"
           style={{
-            borderColor: colors.slate100,
+            flexShrink: 0,
+            padding: '1rem 1.5rem',
+            borderBottom: `1px solid ${colors.slate100}`,
             background: `linear-gradient(to right, ${colors.slate50}, ${colors.white})`,
           }}
         >
-          <div className="flex items-center justify-between">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h3 className="text-lg font-semibold" style={{ color: colors.slate900 }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: colors.slate900 }}>
                 Add Media Details
               </h3>
-              <p className="text-sm mt-0.5 truncate max-w-sm" style={{ color: colors.slate500 }}>
+              <p style={{ fontSize: '0.875rem', marginTop: '0.125rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '20rem', color: colors.slate500 }}>
                 {file.name}
               </p>
             </div>
             <button
               onClick={onCancel}
-              className="p-2 rounded-lg transition-colors"
-              style={{ color: colors.slate400 }}
+              style={{
+                padding: '0.5rem',
+                borderRadius: '0.5rem',
+                transition: 'all 0.2s ease',
+                color: colors.slate400,
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -188,348 +217,489 @@ export function MediaUploadMetadataForm({ file, onUpload, onCancel }: MediaUploa
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* Preview */}
-          {previewUrl && (
-            <div
-              className="aspect-video rounded-xl overflow-hidden"
-              style={{ backgroundColor: colors.slate100 }}
-            >
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          )}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Preview */}
+            {previewUrl && (
+              <div
+                style={{
+                  aspectRatio: '16 / 9',
+                  borderRadius: '0.75rem',
+                  overflow: 'hidden',
+                  backgroundColor: colors.slate100,
+                }}
+              >
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              </div>
+            )}
 
-          {/* Alt Text (required) */}
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-              Alt Text <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              type="text"
-              value={alt}
-              onChange={(e) => setAlt(e.target.value)}
-              placeholder="Describe what this image shows..."
-              className="w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-              style={{
-                backgroundColor: colors.slate50,
-                borderColor: colors.slate200,
-                color: colors.slate900,
-              }}
-            />
-            <p className="text-xs mt-1.5" style={{ color: colors.slate400 }}>
-              Required for accessibility and SEO
-            </p>
-          </div>
-
-          {/* Caption (Title) */}
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-              Caption / Title
-            </label>
-            <input
-              type="text"
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Optional display title..."
-              className="w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-              style={{
-                backgroundColor: colors.slate50,
-                borderColor: colors.slate200,
-                color: colors.slate900,
-              }}
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detailed description..."
-              rows={2}
-              className="w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors resize-none"
-              style={{
-                backgroundColor: colors.slate50,
-                borderColor: colors.slate200,
-                color: colors.slate900,
-              }}
-            />
-          </div>
-
-          {/* Media Type */}
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-              Media Type
-            </label>
-            <select
-              value={mediaType}
-              onChange={(e) => setMediaType(e.target.value as any)}
-              className="w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-              style={{
-                backgroundColor: colors.slate50,
-                borderColor: colors.slate200,
-                color: colors.slate900,
-              }}
-            >
-              <option value="image">Image</option>
-              <option value="video">Video</option>
-              <option value="audio">Audio</option>
-              <option value="document">Document</option>
-            </select>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-              Tags
-            </label>
-            <div className="flex gap-2 mb-2">
+            {/* Alt Text (required) */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                Alt Text <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input
                 type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-                placeholder="Add a tag..."
-                className="flex-1 px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                value={alt}
+                onChange={(e) => setAlt(e.target.value)}
+                placeholder="Describe what this image shows..."
                 style={{
+                  width: '100%',
+                  padding: '0.625rem 1rem',
+                  fontSize: '0.875rem',
+                  border: `1px solid ${colors.slate200}`,
+                  borderRadius: '0.5rem',
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
                   backgroundColor: colors.slate50,
-                  borderColor: colors.slate200,
                   color: colors.slate900,
                 }}
               />
-              <button
-                onClick={addTag}
-                disabled={!tagInput.trim()}
-                className="px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                style={{ backgroundColor: colors.slate100, color: colors.slate700 }}
-              >
-                Add
-              </button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg"
-                    style={{ backgroundColor: colors.blue50, color: colors.blue600 }}
-                  >
-                    {tag}
-                    <button
-                      onClick={() => removeTag(tag)}
-                      className="p-0.5 rounded hover:bg-blue-100"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Featured */}
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <label className="text-sm font-medium" style={{ color: colors.slate700 }}>
-                Featured
-              </label>
-              <p className="text-xs mt-0.5" style={{ color: colors.slate400 }}>
-                Mark as featured media
+              <p style={{ fontSize: '0.75rem', marginTop: '0.375rem', color: colors.slate400 }}>
+                Required for accessibility and SEO
               </p>
             </div>
-            <button
-              onClick={() => setFeatured(!featured)}
-              className="relative w-11 h-6 rounded-full transition-colors"
-              style={{ backgroundColor: featured ? colors.blue500 : colors.slate200 }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform"
+
+            {/* Caption (Title) */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                Caption / Title
+              </label>
+              <input
+                type="text"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="Optional display title..."
                 style={{
-                  backgroundColor: colors.white,
-                  transform: featured ? 'translateX(20px)' : 'translateX(0)',
+                  width: '100%',
+                  padding: '0.625rem 1rem',
+                  fontSize: '0.875rem',
+                  border: `1px solid ${colors.slate200}`,
+                  borderRadius: '0.5rem',
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: colors.slate50,
+                  color: colors.slate900,
                 }}
               />
-            </button>
-          </div>
+            </div>
 
-          {/* Video Settings (conditional) */}
-          {mediaType === 'video' && (
-            <details className="group">
-              <summary
-                className="cursor-pointer px-4 py-3 rounded-lg font-medium text-sm"
-                style={{ backgroundColor: colors.blue50, color: colors.slate900 }}
+            {/* Description */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Detailed description..."
+                rows={2}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 1rem',
+                  fontSize: '0.875rem',
+                  border: `1px solid ${colors.slate200}`,
+                  borderRadius: '0.5rem',
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                  resize: 'none',
+                  backgroundColor: colors.slate50,
+                  color: colors.slate900,
+                }}
+              />
+            </div>
+
+            {/* Media Type */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                Media Type
+              </label>
+              <select
+                value={mediaType}
+                onChange={(e) => setMediaType(e.target.value as any)}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 1rem',
+                  fontSize: '0.875rem',
+                  border: `1px solid ${colors.slate200}`,
+                  borderRadius: '0.5rem',
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: colors.slate50,
+                  color: colors.slate900,
+                }}
               >
-                Video Settings (Optional)
-              </summary>
-              <div className="mt-3 space-y-4 px-4">
-                {/* Duration */}
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-                    Duration (seconds)
-                  </label>
-                  <input
-                    type="number"
-                    value={videoDuration || ''}
-                    onChange={(e) => setVideoDuration(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="Video duration"
-                    className="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-                    style={{
-                      backgroundColor: colors.white,
-                      borderColor: colors.slate200,
-                      color: colors.slate900,
-                    }}
-                  />
-                </div>
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="audio">Audio</option>
+                <option value="document">Document</option>
+              </select>
+            </div>
 
-                {/* Autoplay & Muted */}
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
+            {/* Tags */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                Tags
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addTag()
+                    }
+                  }}
+                  placeholder="Add a tag..."
+                  style={{
+                    flex: 1,
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.875rem',
+                    border: `1px solid ${colors.slate200}`,
+                    borderRadius: '0.5rem',
+                    outline: 'none',
+                    transition: 'all 0.2s ease',
+                    backgroundColor: colors.slate50,
+                    color: colors.slate900,
+                  }}
+                />
+                <button
+                  onClick={addTag}
+                  disabled={!tagInput.trim()}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    borderRadius: '0.5rem',
+                    transition: 'all 0.2s ease',
+                    opacity: !tagInput.trim() ? 0.5 : 1,
+                    cursor: !tagInput.trim() ? 'not-allowed' : 'pointer',
+                    backgroundColor: colors.slate100,
+                    color: colors.slate700,
+                    border: 'none',
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+              {tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.375rem',
+                        padding: '0.25rem 0.75rem',
+                        fontSize: '0.75rem',
+                        borderRadius: '0.5rem',
+                        backgroundColor: colors.blue50,
+                        color: colors.blue600,
+                      }}
+                    >
+                      {tag}
+                      <button
+                        onClick={() => removeTag(tag)}
+                        style={{
+                          padding: '0.125rem',
+                          borderRadius: '0.25rem',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <svg style={{ width: '0.75rem', height: '0.75rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Featured */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0' }}>
+              <div>
+                <label style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.slate700 }}>
+                  Featured
+                </label>
+                <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: colors.slate400 }}>
+                  Mark as featured media
+                </p>
+              </div>
+              <button
+                onClick={() => setFeatured(!featured)}
+                style={{
+                  position: 'relative',
+                  width: '2.75rem',
+                  height: '1.5rem',
+                  borderRadius: '9999px',
+                  transition: 'background-color 0.2s ease',
+                  backgroundColor: featured ? colors.blue500 : colors.slate200,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '0.125rem',
+                    left: '0.125rem',
+                    width: '1.25rem',
+                    height: '1.25rem',
+                    borderRadius: '9999px',
+                    transition: 'transform 0.2s ease',
+                    backgroundColor: colors.white,
+                    transform: featured ? 'translateX(20px)' : 'translateX(0)',
+                  }}
+                />
+              </button>
+            </div>
+
+            {/* Video Settings (conditional) */}
+            {mediaType === 'video' && (
+              <details>
+                <summary
+                  style={{
+                    cursor: 'pointer',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '0.5rem',
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                    backgroundColor: colors.blue50,
+                    color: colors.slate900,
+                  }}
+                >
+                  Video Settings (Optional)
+                </summary>
+                <div style={{ marginTop: '0.75rem', padding: '0 1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* Duration */}
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                        Duration (seconds)
+                      </label>
+                      <input
+                        type="number"
+                        value={videoDuration || ''}
+                        onChange={(e) => setVideoDuration(e.target.value ? Number(e.target.value) : undefined)}
+                        placeholder="Video duration"
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem 1rem',
+                          fontSize: '0.875rem',
+                          border: `1px solid ${colors.slate200}`,
+                          borderRadius: '0.5rem',
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          backgroundColor: colors.white,
+                          color: colors.slate900,
+                        }}
+                      />
+                    </div>
+
+                    {/* Autoplay & Muted */}
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={videoAutoplay}
+                          onChange={(e) => setVideoAutoplay(e.target.checked)}
+                          style={{ width: '1rem', height: '1rem', borderRadius: '0.25rem' }}
+                        />
+                        <span style={{ fontSize: '0.875rem', color: colors.slate700 }}>Autoplay</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={videoMuted}
+                          onChange={(e) => setVideoMuted(e.target.checked)}
+                          style={{ width: '1rem', height: '1rem', borderRadius: '0.25rem' }}
+                        />
+                        <span style={{ fontSize: '0.875rem', color: colors.slate700 }}>Start Muted</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* SEO Settings */}
+            <details>
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.5rem',
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  backgroundColor: colors.slate50,
+                  color: colors.slate900,
+                }}
+              >
+                SEO & Attribution (Optional)
+              </summary>
+              <div style={{ marginTop: '0.75rem', padding: '0 1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Focus Keywords */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                      Focus Keywords
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={videoAutoplay}
-                      onChange={(e) => setVideoAutoplay(e.target.checked)}
-                      className="w-4 h-4 rounded"
+                      type="text"
+                      value={seoKeywords}
+                      onChange={(e) => setSeoKeywords(e.target.value)}
+                      placeholder="e.g., grand-piano, kawai"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        border: `1px solid ${colors.slate200}`,
+                        borderRadius: '0.5rem',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: colors.white,
+                        color: colors.slate900,
+                      }}
                     />
-                    <span className="text-sm" style={{ color: colors.slate700 }}>Autoplay</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  </div>
+
+                  {/* Photographer */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                      Photographer Credit
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={videoMuted}
-                      onChange={(e) => setVideoMuted(e.target.checked)}
-                      className="w-4 h-4 rounded"
+                      type="text"
+                      value={seoPhotographer}
+                      onChange={(e) => setSeoPhotographer(e.target.value)}
+                      placeholder="Photo credit"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        border: `1px solid ${colors.slate200}`,
+                        borderRadius: '0.5rem',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: colors.white,
+                        color: colors.slate900,
+                      }}
                     />
-                    <span className="text-sm" style={{ color: colors.slate700 }}>Start Muted</span>
-                  </label>
+                  </div>
+
+                  {/* Copyright */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                      Copyright Info
+                    </label>
+                    <input
+                      type="text"
+                      value={seoCopyright}
+                      onChange={(e) => setSeoCopyright(e.target.value)}
+                      placeholder="Copyright or licensing"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        border: `1px solid ${colors.slate200}`,
+                        borderRadius: '0.5rem',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: colors.white,
+                        color: colors.slate900,
+                      }}
+                    />
+                  </div>
+
+                  {/* Source */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.slate700 }}>
+                      Original Source
+                    </label>
+                    <input
+                      type="text"
+                      value={seoSource}
+                      onChange={(e) => setSeoSource(e.target.value)}
+                      placeholder="Source URL"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        border: `1px solid ${colors.slate200}`,
+                        borderRadius: '0.5rem',
+                        outline: 'none',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: colors.white,
+                        color: colors.slate900,
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </details>
-          )}
-
-          {/* SEO Settings */}
-          <details className="group">
-            <summary
-              className="cursor-pointer px-4 py-3 rounded-lg font-medium text-sm"
-              style={{ backgroundColor: colors.slate50, color: colors.slate900 }}
-            >
-              SEO & Attribution (Optional)
-            </summary>
-            <div className="mt-3 space-y-4 px-4">
-              {/* Focus Keywords */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-                  Focus Keywords
-                </label>
-                <input
-                  type="text"
-                  value={seoKeywords}
-                  onChange={(e) => setSeoKeywords(e.target.value)}
-                  placeholder="e.g., grand-piano, kawai"
-                  className="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    backgroundColor: colors.white,
-                    borderColor: colors.slate200,
-                    color: colors.slate900,
-                  }}
-                />
-              </div>
-
-              {/* Photographer */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-                  Photographer Credit
-                </label>
-                <input
-                  type="text"
-                  value={seoPhotographer}
-                  onChange={(e) => setSeoPhotographer(e.target.value)}
-                  placeholder="Photo credit"
-                  className="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    backgroundColor: colors.white,
-                    borderColor: colors.slate200,
-                    color: colors.slate900,
-                  }}
-                />
-              </div>
-
-              {/* Copyright */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-                  Copyright Info
-                </label>
-                <input
-                  type="text"
-                  value={seoCopyright}
-                  onChange={(e) => setSeoCopyright(e.target.value)}
-                  placeholder="Copyright or licensing"
-                  className="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    backgroundColor: colors.white,
-                    borderColor: colors.slate200,
-                    color: colors.slate900,
-                  }}
-                />
-              </div>
-
-              {/* Source */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: colors.slate700 }}>
-                  Original Source
-                </label>
-                <input
-                  type="text"
-                  value={seoSource}
-                  onChange={(e) => setSeoSource(e.target.value)}
-                  placeholder="Source URL"
-                  className="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    backgroundColor: colors.white,
-                    borderColor: colors.slate200,
-                    color: colors.slate900,
-                  }}
-                />
-              </div>
-            </div>
-          </details>
+          </div>
         </div>
 
         {/* Footer */}
         <div
-          className="flex-shrink-0 px-6 py-4 border-t flex items-center justify-between gap-3"
-          style={{ backgroundColor: colors.white, borderColor: colors.slate200 }}
+          style={{
+            flexShrink: 0,
+            padding: '1rem 1.5rem',
+            borderTop: `1px solid ${colors.slate200}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            backgroundColor: colors.white,
+          }}
         >
           <button
             onClick={onCancel}
-            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-colors"
-            style={{ color: colors.slate600 }}
+            style={{
+              padding: '0.625rem 1.25rem',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              borderRadius: '0.75rem',
+              transition: 'all 0.2s ease',
+              color: colors.slate600,
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={!alt.trim()}
-            className="px-8 py-2.5 text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
             style={{
+              padding: '0.625rem 2rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: '0.75rem',
+              transition: 'all 0.2s ease',
+              opacity: !alt.trim() ? 0.5 : 1,
+              cursor: !alt.trim() ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               color: colors.white,
               background: `linear-gradient(to right, ${colors.indigo600}, ${colors.blue600})`,
+              border: 'none',
             }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             Upload Media

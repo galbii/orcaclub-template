@@ -48,6 +48,18 @@ const colors = {
   black: '#000000',
 }
 
+// Keyframe animations
+const spinKeyframes = `
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+`
+
 interface FolderTreeItemProps {
   folder: FolderTreeNode
   depth: number
@@ -77,8 +89,15 @@ function FolderTreeItem({
   return (
     <div>
       <div
-        className="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-150 mb-1"
         style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '12px 16px',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+          marginBottom: '4px',
           marginLeft: `${depth * 20}px`,
           backgroundColor: isSelected ? colors.hoverBg : 'transparent',
           borderLeft: isSelected ? `3px solid ${colors.primary}` : '3px solid transparent',
@@ -93,16 +112,29 @@ function FolderTreeItem({
             e.stopPropagation()
             onToggle(folder.id)
           }}
-          className="w-6 h-6 flex items-center justify-center rounded-lg transition-colors"
           style={{
+            width: '24px',
+            height: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '8px',
+            transition: 'background-color 0.2s ease',
             opacity: hasChildren ? 1 : 0,
             backgroundColor: hasChildren ? colors.cardBg : 'transparent',
+            border: 'none',
+            cursor: hasChildren ? 'pointer' : 'default',
           }}
         >
           {hasChildren && (
             <svg
-              className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-              style={{ color: colors.textSecondary }}
+              style={{
+                width: '16px',
+                height: '16px',
+                transition: 'transform 0.2s ease',
+                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                color: colors.textSecondary,
+              }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -114,12 +146,23 @@ function FolderTreeItem({
 
         {/* Folder icon */}
         <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: isSelected ? colors.cardBg : colors.inputBg }}
+          style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            backgroundColor: isSelected ? colors.cardBg : colors.inputBg,
+          }}
         >
           <svg
-            className="w-5 h-5"
-            style={{ color: isSelected ? colors.primary : colors.gold }}
+            style={{
+              width: '20px',
+              height: '20px',
+              color: isSelected ? colors.primary : colors.gold,
+            }}
             fill="currentColor"
             viewBox="0 0 24 24"
           >
@@ -133,25 +176,41 @@ function FolderTreeItem({
 
         {/* Folder name */}
         <span
-          className="flex-1 text-base font-medium truncate"
-          style={{ color: isSelected ? colors.textAccent : colors.textPrimary }}
+          style={{
+            flex: 1,
+            fontSize: '16px',
+            fontWeight: 500,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: isSelected ? colors.textAccent : colors.textPrimary,
+          }}
         >
           {folder.name}
         </span>
 
         {/* Actions */}
         {showActions && (
-          <div className="flex items-center gap-1">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 onCreateChild(folder.id)
               }}
-              className="p-2 rounded-lg transition-colors hover:bg-opacity-80"
-              style={{ backgroundColor: colors.cardBg, color: colors.textSecondary }}
+              style={{
+                padding: '8px',
+                borderRadius: '8px',
+                transition: 'opacity 0.2s ease',
+                backgroundColor: colors.cardBg,
+                color: colors.textSecondary,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
               title="Create subfolder"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
@@ -162,11 +221,20 @@ function FolderTreeItem({
                   onDelete(folder.id)
                 }
               }}
-              className="p-2 rounded-lg transition-colors hover:bg-opacity-80"
-              style={{ backgroundColor: colors.errorBg, color: colors.error }}
+              style={{
+                padding: '8px',
+                borderRadius: '8px',
+                transition: 'opacity 0.2s ease',
+                backgroundColor: colors.errorBg,
+                color: colors.error,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
               title="Delete folder"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -176,7 +244,7 @@ function FolderTreeItem({
 
       {/* Children */}
       {hasChildren && isExpanded && (
-        <div className="mt-1">
+        <div style={{ marginTop: '4px' }}>
           {folder.children.map((child) => (
             <FolderTreeItem
               key={child.id}
@@ -219,28 +287,50 @@ function CreateFolderDialog({ parentId, parentName, onClose, onCreate }: CreateF
 
   return (
     <div
-      className="fixed inset-0 z-[10003] flex items-center justify-center p-4"
-      style={{ backgroundColor: colors.backdrop }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10003,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        backgroundColor: colors.backdrop,
+      }}
       onClick={onClose}
     >
       <div
-        className="rounded-2xl shadow-2xl w-full max-w-md p-8 border"
-        style={{ backgroundColor: colors.modalBg, borderColor: colors.border }}
+        style={{
+          borderRadius: '16px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+          width: '100%',
+          maxWidth: '448px',
+          padding: '32px',
+          border: `1px solid ${colors.border}`,
+          backgroundColor: colors.modalBg,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-4 mb-6">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: colors.warningBg }}
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.warningBg,
+            }}
           >
-            <svg className="w-6 h-6" style={{ color: colors.gold }} fill="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: '24px', height: '24px', color: colors.gold }} fill="currentColor" viewBox="0 0 24 24">
               <path d="M3 7V17a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6.586a1 1 0 01-.707-.293L10 5H5a2 2 0 00-2 2z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-xl font-semibold" style={{ color: colors.textPrimary }}>New Folder</h3>
+            <h3 style={{ fontSize: '20px', fontWeight: 600, color: colors.textPrimary }}>New Folder</h3>
             {parentName && (
-              <p className="text-sm mt-0.5" style={{ color: colors.textSecondary }}>Inside: {parentName}</p>
+              <p style={{ fontSize: '14px', marginTop: '2px', color: colors.textSecondary }}>Inside: {parentName}</p>
             )}
           </div>
         </div>
@@ -252,29 +342,62 @@ function CreateFolderDialog({ parentId, parentName, onClose, onCreate }: CreateF
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter folder name..."
             autoFocus
-            className="w-full px-5 py-4 text-base border-2 rounded-xl focus:outline-none transition-colors mb-6"
             style={{
+              width: '100%',
+              padding: '16px 20px',
+              fontSize: '16px',
+              border: `2px solid ${colors.border}`,
+              borderRadius: '12px',
+              outline: 'none',
+              transition: 'border-color 0.2s ease',
+              marginBottom: '24px',
               backgroundColor: colors.inputBg,
-              borderColor: colors.border,
               color: colors.textPrimary,
             }}
             onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
             onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
           />
-          <div className="flex items-center justify-end gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 text-base font-medium rounded-xl transition-colors hover:bg-opacity-80"
-              style={{ color: colors.textSecondary, backgroundColor: colors.cardBg }}
+              style={{
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 500,
+                borderRadius: '12px',
+                transition: 'opacity 0.2s ease',
+                color: colors.textSecondary,
+                backgroundColor: colors.cardBg,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim() || isCreating}
-              className="px-6 py-3 text-base font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-opacity-90"
-              style={{ backgroundColor: colors.primary, color: colors.white }}
+              style={{
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                borderRadius: '12px',
+                transition: 'opacity 0.2s ease',
+                opacity: !name.trim() || isCreating ? 0.5 : 1,
+                cursor: !name.trim() || isCreating ? 'not-allowed' : 'pointer',
+                backgroundColor: colors.primary,
+                color: colors.white,
+                border: 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (name.trim() && !isCreating) e.currentTarget.style.opacity = '0.9'
+              }}
+              onMouseLeave={(e) => {
+                if (name.trim() && !isCreating) e.currentTarget.style.opacity = '1'
+              }}
             >
               {isCreating ? 'Creating...' : 'Create Folder'}
             </button>
@@ -325,31 +448,59 @@ export function FolderTree() {
 
   if (isFoldersLoading) {
     return (
-      <div className="p-8 flex items-center justify-center" style={{ backgroundColor: colors.sidebarBg }}>
-        <div
-          className="animate-spin rounded-full h-8 w-8 border-3 border-t-transparent"
-          style={{ borderColor: colors.primary, borderTopColor: 'transparent' }}
-        />
-      </div>
+      <>
+        <style>{spinKeyframes}</style>
+        <div style={{
+          padding: '32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.sidebarBg
+        }}>
+          <div
+            style={{
+              animation: 'spin 1s linear infinite',
+              borderRadius: '9999px',
+              height: '32px',
+              width: '32px',
+              border: '3px solid',
+              borderColor: colors.primary,
+              borderTopColor: 'transparent',
+            }}
+          />
+        </div>
+      </>
     )
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: colors.sidebarBg }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: colors.sidebarBg }}>
       {/* Header */}
       <div
-        className="flex-shrink-0 px-6 py-5 border-b"
-        style={{ borderColor: colors.border }}
+        style={{
+          flexShrink: 0,
+          padding: '20px 24px',
+          borderBottom: `1px solid ${colors.border}`,
+        }}
       >
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>Folders</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: colors.textPrimary }}>Folders</h3>
           <button
             onClick={() => openCreateDialog()}
-            className="p-2.5 rounded-xl transition-colors hover:bg-opacity-80"
-            style={{ backgroundColor: colors.cardBg, color: colors.textSecondary }}
+            style={{
+              padding: '10px',
+              borderRadius: '12px',
+              transition: 'opacity 0.2s ease',
+              backgroundColor: colors.cardBg,
+              color: colors.textSecondary,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             title="Create folder"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
@@ -357,23 +508,40 @@ export function FolderTree() {
       </div>
 
       {/* Tree */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
         {/* All Media (Root) */}
         <div
-          className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-150 mb-2"
           style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            marginBottom: '8px',
             backgroundColor: currentFolder === null ? colors.hoverBg : 'transparent',
             borderLeft: currentFolder === null ? `3px solid ${colors.primary}` : '3px solid transparent',
           }}
           onClick={() => setCurrentFolder(null)}
         >
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: currentFolder === null ? colors.cardBg : colors.inputBg }}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: currentFolder === null ? colors.cardBg : colors.inputBg,
+            }}
           >
             <svg
-              className="w-5 h-5"
-              style={{ color: currentFolder === null ? colors.primary : colors.textMuted }}
+              style={{
+                width: '20px',
+                height: '20px',
+                color: currentFolder === null ? colors.primary : colors.textMuted,
+              }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -382,8 +550,11 @@ export function FolderTree() {
             </svg>
           </div>
           <span
-            className="text-base font-medium"
-            style={{ color: currentFolder === null ? colors.textAccent : colors.textPrimary }}
+            style={{
+              fontSize: '16px',
+              fontWeight: 500,
+              color: currentFolder === null ? colors.textAccent : colors.textPrimary,
+            }}
           >
             All Media
           </span>
@@ -391,26 +562,45 @@ export function FolderTree() {
 
         {/* Divider */}
         {folderTree.length > 0 && (
-          <div className="h-px my-3" style={{ backgroundColor: colors.border }} />
+          <div style={{ height: '1px', margin: '12px 0', backgroundColor: colors.border }} />
         )}
 
         {/* Folder tree */}
         {folderTree.length === 0 ? (
-          <div className="px-4 py-8 text-center">
+          <div style={{ padding: '16px', paddingTop: '32px', paddingBottom: '32px', textAlign: 'center' }}>
             <div
-              className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-              style={{ backgroundColor: colors.cardBg }}
+              style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 16px',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.cardBg,
+              }}
             >
-              <svg className="w-8 h-8" style={{ color: colors.textMuted }} fill="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '32px', height: '32px', color: colors.textMuted }} fill="currentColor" viewBox="0 0 24 24">
                 <path d="M3 7V17a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6.586a1 1 0 01-.707-.293L10 5H5a2 2 0 00-2 2z" />
               </svg>
             </div>
-            <p className="text-base font-medium mb-2" style={{ color: colors.textSecondary }}>No folders yet</p>
-            <p className="text-sm mb-4" style={{ color: colors.textMuted }}>Organize your media into folders</p>
+            <p style={{ fontSize: '16px', fontWeight: 500, marginBottom: '8px', color: colors.textSecondary }}>No folders yet</p>
+            <p style={{ fontSize: '14px', marginBottom: '16px', color: colors.textMuted }}>Organize your media into folders</p>
             <button
               onClick={() => openCreateDialog()}
-              className="px-5 py-2.5 text-sm font-medium rounded-xl transition-colors hover:bg-opacity-90"
-              style={{ backgroundColor: colors.primary, color: colors.white }}
+              style={{
+                padding: '10px 20px',
+                fontSize: '14px',
+                fontWeight: 500,
+                borderRadius: '12px',
+                transition: 'opacity 0.2s ease',
+                backgroundColor: colors.primary,
+                color: colors.white,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
               Create First Folder
             </button>

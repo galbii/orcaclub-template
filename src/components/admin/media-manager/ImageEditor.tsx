@@ -40,8 +40,17 @@ interface ImageEditorProps {
  * Scales consistently to fill available space
  */
 export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
+  console.log('📸 [IMAGE EDITOR] Component function called with file:', file.name)
   const containerRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+
+  // Log when component actually renders to DOM
+  useEffect(() => {
+    console.log('✅ [IMAGE EDITOR] Component mounted to DOM!')
+    return () => {
+      console.log('❌ [IMAGE EDITOR] Component unmounting from DOM')
+    }
+  }, [])
 
   const [imageUrl, setImageUrl] = useState<string>('')
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 })
@@ -60,23 +69,32 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
 
   // Load image and get its dimensions
   useEffect(() => {
+    console.log('📸 [IMAGE EDITOR] Loading file:', file.name)
     const url = URL.createObjectURL(file)
     setImageUrl(url)
+    console.log('📸 [IMAGE EDITOR] Image URL created:', url)
 
     // Load image to get dimensions BEFORE rendering
-    // This breaks the circular dependency where the img element
-    // only renders when displayDimensions > 0, but dimensions
-    // are only set via onLoad which requires the img to render
     const img = new Image()
     img.onload = () => {
+      console.log('📸 [IMAGE EDITOR] Image loaded:', {
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      })
       setImageDimensions({
         width: img.naturalWidth,
         height: img.naturalHeight,
       })
     }
+    img.onerror = (e) => {
+      console.error('❌ [IMAGE EDITOR] Image load error:', e)
+    }
     img.src = url
 
-    return () => URL.revokeObjectURL(url)
+    return () => {
+      console.log('📸 [IMAGE EDITOR] Cleaning up URL')
+      URL.revokeObjectURL(url)
+    }
   }, [file])
 
   // Measure container size
@@ -99,7 +117,15 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
 
   // Calculate display dimensions when image loads or container resizes
   const calculateDisplayDimensions = useCallback(() => {
-    if (!imageDimensions.width || !imageDimensions.height) return
+    console.log('📸 [IMAGE EDITOR] calculateDisplayDimensions called:', {
+      imageDimensions,
+      containerSize,
+    })
+
+    if (!imageDimensions.width || !imageDimensions.height) {
+      console.log('❌ [IMAGE EDITOR] No image dimensions yet, skipping calculation')
+      return
+    }
 
     const maxWidth = Math.min(containerSize.width, 900)
     const maxHeight = Math.min(containerSize.height, 600)
@@ -123,6 +149,11 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
     // Ensure minimum size
     displayWidth = Math.max(displayWidth, 200)
     displayHeight = Math.max(displayHeight, 200)
+
+    console.log('📸 [IMAGE EDITOR] Calculated display dimensions:', {
+      displayWidth: Math.round(displayWidth),
+      displayHeight: Math.round(displayHeight),
+    })
 
     setDisplayDimensions({
       width: Math.round(displayWidth),
@@ -362,47 +393,87 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
 
   const cropInfo = getCropInfo()
 
+  console.log('📸 [IMAGE EDITOR] Render state:', {
+    imageUrl,
+    displayWidth: displayDimensions.width,
+    displayHeight: displayDimensions.height,
+    imageWidth: imageDimensions.width,
+    imageHeight: imageDimensions.height,
+    shouldShowImage: !!(imageUrl && displayDimensions.width > 0),
+  })
+
   return (
     <div
-      className="fixed inset-0 z-[10002] flex items-center justify-center p-4 backdrop-blur-sm"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000001,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(8px)',
+      }}
     >
       <div
-        className="rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] max-h-[900px] flex flex-col overflow-hidden"
-        style={{ backgroundColor: colors.white }}
+        style={{
+          backgroundColor: colors.white,
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          width: '100%',
+          maxWidth: '1200px',
+          height: '90vh',
+          maxHeight: '900px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
       >
         {/* Header */}
         <div
-          className="flex-shrink-0 px-6 py-4 border-b"
           style={{
-            borderColor: colors.slate100,
+            flexShrink: 0,
+            padding: '16px 24px',
+            borderBottom: `1px solid ${colors.slate100}`,
             background: `linear-gradient(to right, ${colors.slate50}, ${colors.white})`,
           }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-xl" style={{ backgroundColor: colors.indigo100 }}>
-                <svg className="w-6 h-6" style={{ color: colors.indigo600 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ padding: '8px', borderRadius: '12px', backgroundColor: colors.indigo100 }}>
+                <svg style={{ width: '24px', height: '24px', color: colors.indigo600 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-semibold" style={{ color: colors.slate900 }}>Edit Image</h3>
-                <p className="text-sm truncate max-w-sm" style={{ color: colors.slate500 }}>{file.name}</p>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: colors.slate900, margin: 0 }}>Edit Image</h3>
+                <p style={{ fontSize: '14px', color: colors.slate500, margin: '2px 0 0 0', maxWidth: '384px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {file.name}
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {imageDimensions.width > 0 && (
-                <span className="text-sm" style={{ color: colors.slate400 }}>
+                <span style={{ fontSize: '14px', color: colors.slate400 }}>
                   Original: {imageDimensions.width} × {imageDimensions.height}px
                 </span>
               )}
               <button
                 onClick={onCancel}
-                className="p-2 rounded-lg transition-colors"
-                style={{ color: colors.slate400 }}
+                style={{
+                  padding: '8px',
+                  borderRadius: '8px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: colors.slate400,
+                  cursor: 'pointer',
+                }}
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -413,13 +484,23 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
         {/* Image area - takes remaining space */}
         <div
           ref={containerRef}
-          className="flex-1 relative flex items-center justify-center p-8 overflow-hidden"
-          style={{ backgroundColor: colors.slate900 }}
+          style={{
+            flex: 1,
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '32px',
+            overflow: 'hidden',
+            backgroundColor: colors.slate900,
+          }}
         >
           {imageUrl && displayDimensions.width > 0 ? (
             <div
-              className="relative select-none cursor-crosshair"
               style={{
+                position: 'relative',
+                userSelect: 'none',
+                cursor: 'crosshair',
                 width: displayDimensions.width,
                 height: displayDimensions.height,
                 transform: `rotate(${rotation}deg)`,
@@ -436,8 +517,10 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
                 src={imageUrl}
                 alt="Preview"
                 onLoad={handleImageLoad}
-                className="block rounded-lg shadow-2xl"
                 style={{
+                  display: 'block',
+                  borderRadius: '8px',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                   width: displayDimensions.width,
                   height: displayDimensions.height,
                 }}
@@ -447,8 +530,10 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
               {/* Crop selection with shadow overlay */}
               {crop && (
                 <div
-                  className="absolute border-2 border-white pointer-events-none"
                   style={{
+                    position: 'absolute',
+                    border: '2px solid white',
+                    pointerEvents: 'none',
                     left: crop.x,
                     top: crop.y,
                     width: Math.max(crop.width, 1),
@@ -459,25 +544,25 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
                   {/* Corner handles */}
                   {crop.width > 30 && crop.height > 30 && (
                     <>
-                      <div className="absolute -top-2 -left-2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-indigo-500" />
-                      <div className="absolute -top-2 -right-2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-indigo-500" />
-                      <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-indigo-500" />
-                      <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-indigo-500" />
+                      <div style={{ position: 'absolute', top: '-8px', left: '-8px', width: '16px', height: '16px', backgroundColor: 'white', borderRadius: '9999px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', border: `2px solid ${colors.indigo500}` }} />
+                      <div style={{ position: 'absolute', top: '-8px', right: '-8px', width: '16px', height: '16px', backgroundColor: 'white', borderRadius: '9999px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', border: `2px solid ${colors.indigo500}` }} />
+                      <div style={{ position: 'absolute', bottom: '-8px', left: '-8px', width: '16px', height: '16px', backgroundColor: 'white', borderRadius: '9999px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', border: `2px solid ${colors.indigo500}` }} />
+                      <div style={{ position: 'absolute', bottom: '-8px', right: '-8px', width: '16px', height: '16px', backgroundColor: 'white', borderRadius: '9999px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', border: `2px solid ${colors.indigo500}` }} />
 
                       {/* Rule of thirds grid */}
-                      <div className="absolute inset-0 pointer-events-none">
-                        <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/40" />
-                        <div className="absolute right-1/3 top-0 bottom-0 w-px bg-white/40" />
-                        <div className="absolute top-1/3 left-0 right-0 h-px bg-white/40" />
-                        <div className="absolute bottom-1/3 left-0 right-0 h-px bg-white/40" />
+                      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                        <div style={{ position: 'absolute', left: '33.333%', top: 0, bottom: 0, width: '1px', backgroundColor: 'rgba(255, 255, 255, 0.4)' }} />
+                        <div style={{ position: 'absolute', right: '33.333%', top: 0, bottom: 0, width: '1px', backgroundColor: 'rgba(255, 255, 255, 0.4)' }} />
+                        <div style={{ position: 'absolute', top: '33.333%', left: 0, right: 0, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.4)' }} />
+                        <div style={{ position: 'absolute', bottom: '33.333%', left: 0, right: 0, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.4)' }} />
                       </div>
                     </>
                   )}
 
                   {/* Crop dimensions label */}
                   {crop.width > 60 && crop.height > 40 && cropInfo && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className="px-2 py-1 bg-black/70 rounded text-white text-xs font-mono">
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                      <span style={{ padding: '0.25rem 0.5rem', backgroundColor: 'rgba(0, 0, 0, 0.7)', borderRadius: '0.25rem', color: 'white', fontSize: '0.75rem', fontFamily: 'monospace' }}>
                         {cropInfo.width} × {cropInfo.height}
                       </span>
                     </div>
@@ -486,58 +571,115 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-2 border-white border-t-transparent" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '2px solid white',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
             </div>
           )}
 
           {/* Instructions overlay */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur-sm rounded-full">
-            <p className="text-white/90 text-sm font-medium">Click and drag to select crop area</p>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '24px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              padding: '8px 16px',
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+              borderRadius: '9999px',
+            }}
+          >
+            <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', fontWeight: 500, margin: 0 }}>
+              Click and drag to select crop area
+            </p>
           </div>
 
           {/* Rotation indicator */}
           {rotation !== 0 && (
             <div
-              className="absolute top-6 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: colors.indigo600 }}
+              style={{
+                position: 'absolute',
+                top: '24px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                padding: '6px 12px',
+                borderRadius: '9999px',
+                backgroundColor: colors.indigo600,
+              }}
             >
-              <p className="text-sm font-medium" style={{ color: colors.white }}>{rotation}° rotation</p>
+              <p style={{ fontSize: '14px', fontWeight: 500, color: colors.white, margin: 0 }}>
+                {rotation}° rotation
+              </p>
             </div>
           )}
         </div>
 
         {/* Controls */}
         <div
-          className="flex-shrink-0 px-6 py-4 border-t"
-          style={{ backgroundColor: colors.slate50, borderColor: colors.slate200 }}
+          style={{
+            flexShrink: 0,
+            padding: '16px 24px',
+            borderTop: `1px solid ${colors.slate200}`,
+            backgroundColor: colors.slate50,
+          }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-6">
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
               {/* Rotation */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium" style={{ color: colors.slate700 }}>Rotate:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 500, color: colors.slate700 }}>Rotate:</span>
                 <div
-                  className="flex items-center rounded-lg border shadow-sm"
-                  style={{ backgroundColor: colors.white, borderColor: colors.slate200 }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: '8px',
+                    border: `1px solid ${colors.slate200}`,
+                    backgroundColor: colors.white,
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                  }}
                 >
                   <button
                     onClick={() => rotate(-90)}
-                    className="p-2.5 rounded-l-lg transition-colors border-r"
-                    style={{ color: colors.slate600, borderColor: colors.slate200 }}
+                    style={{
+                      padding: '10px',
+                      borderTopLeftRadius: '8px',
+                      borderBottomLeftRadius: '8px',
+                      borderRight: `1px solid ${colors.slate200}`,
+                      backgroundColor: 'transparent',
+                      color: colors.slate600,
+                      cursor: 'pointer',
+                      border: 'none',
+                      borderRight: `1px solid ${colors.slate200}`,
+                    }}
                     title="Rotate left 90°"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                     </svg>
                   </button>
                   <button
                     onClick={() => rotate(90)}
-                    className="p-2.5 rounded-r-lg transition-colors"
-                    style={{ color: colors.slate600 }}
+                    style={{
+                      padding: '10px',
+                      borderTopRightRadius: '8px',
+                      borderBottomRightRadius: '8px',
+                      backgroundColor: 'transparent',
+                      color: colors.slate600,
+                      cursor: 'pointer',
+                      border: 'none',
+                    }}
                     title="Rotate right 90°"
                   >
-                    <svg className="w-5 h-5 scale-x-[-1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg style={{ width: '20px', height: '20px', transform: 'scaleX(-1)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                     </svg>
                   </button>
@@ -545,11 +687,19 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
               </div>
 
               {/* Quality slider */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium" style={{ color: colors.slate700 }}>Quality:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 500, color: colors.slate700 }}>Quality:</span>
                 <div
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border shadow-sm"
-                  style={{ backgroundColor: colors.white, borderColor: colors.slate200 }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: `1px solid ${colors.slate200}`,
+                    backgroundColor: colors.white,
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                  }}
                 >
                   <input
                     type="range"
@@ -557,21 +707,33 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
                     max="100"
                     value={quality}
                     onChange={(e) => setQuality(Number(e.target.value))}
-                    className="w-32 h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ accentColor: colors.indigo600 }}
+                    style={{
+                      width: '128px',
+                      height: '8px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      accentColor: colors.indigo600,
+                    }}
                   />
-                  <span className="text-sm font-mono w-10 text-right" style={{ color: colors.slate700 }}>{quality}%</span>
+                  <span style={{ fontSize: '14px', fontFamily: 'monospace', fontWeight: 500, width: '40px', textAlign: 'right', color: colors.slate700 }}>
+                    {quality}%
+                  </span>
                 </div>
               </div>
 
               {/* Reset crop */}
               <button
                 onClick={resetCrop}
-                className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border shadow-sm"
                 style={{
-                  color: colors.slate600,
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.slate200}`,
                   backgroundColor: colors.white,
-                  borderColor: colors.slate200,
+                  color: colors.slate600,
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
                 }}
               >
                 Reset Crop
@@ -580,8 +742,8 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
 
             {/* Output info */}
             {cropInfo && (
-              <div className="text-sm" style={{ color: colors.slate500 }}>
-                Output: <span className="font-mono font-medium" style={{ color: colors.slate700 }}>{cropInfo.width} × {cropInfo.height}px</span>
+              <div style={{ fontSize: '14px', color: colors.slate500 }}>
+                Output: <span style={{ fontFamily: 'monospace', fontWeight: 500, color: colors.slate700 }}>{cropInfo.width} × {cropInfo.height}px</span>
               </div>
             )}
           </div>
@@ -589,36 +751,67 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
 
         {/* Footer */}
         <div
-          className="flex-shrink-0 px-6 py-4 border-t flex items-center justify-between"
-          style={{ backgroundColor: colors.white, borderColor: colors.slate200 }}
+          style={{
+            flexShrink: 0,
+            padding: '16px 24px',
+            borderTop: `1px solid ${colors.slate200}`,
+            backgroundColor: colors.white,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
         >
           <button
             onClick={onCancel}
-            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-colors"
-            style={{ color: colors.slate600 }}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: 500,
+              borderRadius: '12px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: colors.slate600,
+              cursor: 'pointer',
+            }}
           >
             Skip Editing
           </button>
           <button
             onClick={handleSave}
             disabled={isProcessing || !crop}
-            className="px-8 py-2.5 text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 32px',
+              fontSize: '14px',
+              fontWeight: 600,
+              borderRadius: '12px',
+              border: 'none',
               color: colors.white,
-              background: `linear-gradient(to right, ${colors.indigo600}, ${colors.blue600})`,
+              background: isProcessing || !crop ? colors.slate400 : `linear-gradient(to right, ${colors.indigo600}, ${colors.blue600})`,
+              cursor: isProcessing || !crop ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+              opacity: isProcessing || !crop ? 0.5 : 1,
             }}
           >
             {isProcessing ? (
               <>
                 <div
-                  className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent"
-                  style={{ borderColor: colors.white, borderTopColor: 'transparent' }}
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    border: `2px solid ${colors.white}`,
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }}
                 />
                 Processing...
               </>
             ) : (
               <>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Apply & Upload

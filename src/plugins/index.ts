@@ -3,6 +3,7 @@ import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
+import { r2Storage } from '@payloadcms/storage-r2'
 import { Plugin } from 'payload'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
@@ -23,7 +24,32 @@ const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
   return doc?.slug ? `${url}/${doc.slug}` : url
 }
 
+// Storage mode configuration
+// Set STORAGE_MODE=local in .env to use local filesystem storage
+// Set STORAGE_MODE=r2 in .env to use Cloudflare R2 storage
+const storageMode = process.env.STORAGE_MODE || 'local'
+const useR2Storage = storageMode === 'r2'
+
 export const plugins: Plugin[] = [
+  // Conditionally add R2 storage plugin if STORAGE_MODE=r2
+  ...(useR2Storage && process.env.R2_BUCKET
+    ? [
+        r2Storage({
+          collections: {
+            media: true, // Enable R2 storage for Media collection
+          },
+          bucket: process.env.R2_BUCKET,
+          config: {
+            credentials: {
+              accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+            },
+            region: 'auto',
+            endpoint: process.env.R2_ENDPOINT,
+          },
+        }),
+      ]
+    : []),
   redirectsPlugin({
     collections: ['pages', 'posts'],
     overrides: {

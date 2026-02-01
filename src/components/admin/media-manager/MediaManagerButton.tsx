@@ -1,6 +1,7 @@
 'use client'
 
 import { useMediaManager } from './MediaManagerProvider'
+import { useEffect } from 'react'
 
 // Explicit color constants
 const colors = {
@@ -11,27 +12,86 @@ const colors = {
 
 /**
  * Minimal floating button to open the media manager
+ * Uses all inline styles to ensure visibility in Payload admin context
  */
 export function MediaManagerButton() {
-  const { openModal } = useMediaManager()
+  const context = useMediaManager()
+  const { openModal } = context
+
+  // Debug: Log when component mounts
+  useEffect(() => {
+    console.log('[MediaManagerButton] Component mounted and rendered')
+    console.log('[MediaManagerButton] Context available:', !!context)
+    console.log('[MediaManagerButton] openModal function available:', !!openModal)
+    console.log('[MediaManagerButton] Context keys:', Object.keys(context))
+    return () => {
+      console.log('[MediaManagerButton] Component unmounted')
+    }
+  }, [context, openModal])
 
   const handleClick = () => {
-    openModal()
+    console.log('[MediaManagerButton] ========== BUTTON CLICKED ==========')
+    console.log('[MediaManagerButton] openModal function type:', typeof openModal)
+    console.log('[MediaManagerButton] Calling openModal()...')
+    try {
+      openModal()
+      console.log('[MediaManagerButton] openModal() called successfully')
+    } catch (error) {
+      console.error('[MediaManagerButton] Error calling openModal():', error)
+    }
+    console.log('[MediaManagerButton] ========== CLICK HANDLER COMPLETE ==========')
   }
 
   return (
     <button
       onClick={handleClick}
-      className="fixed bottom-6 right-6 z-[9998] flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
-      style={{
-        backgroundColor: colors.slate900,
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      }}
       title="Open Media Library"
+      style={{
+        // Positioning - all inline to ensure it works
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 99999, // Very high z-index to ensure visibility
+
+        // Layout
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '56px',
+        height: '56px',
+
+        // Appearance
+        backgroundColor: colors.slate900,
+        border: 'none',
+        borderRadius: '14px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        cursor: 'pointer',
+
+        // Animation
+        transition: 'all 0.2s ease',
+        transform: 'scale(1)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.05)'
+        e.currentTarget.style.boxShadow = '0 6px 25px rgba(0, 0, 0, 0.4)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)'
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)'
+      }}
+      onMouseDown={(e) => {
+        e.currentTarget.style.transform = 'scale(0.95)'
+      }}
+      onMouseUp={(e) => {
+        e.currentTarget.style.transform = 'scale(1.05)'
+      }}
     >
       <svg
-        className="w-5 h-5"
-        style={{ color: colors.white }}
+        style={{
+          width: '24px',
+          height: '24px',
+          color: colors.white,
+        }}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

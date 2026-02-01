@@ -23,7 +23,7 @@ export const Media: CollectionConfig = {
     {
       name: 'alt',
       type: 'text',
-      required: true,
+      required: false, // Make optional to allow uploads without alt text initially
       admin: {
         description: 'Alternative text for accessibility and SEO. Describe what the image shows.',
       },
@@ -192,7 +192,9 @@ export const Media: CollectionConfig = {
     },
   ],
   upload: {
-    // Storage will be configured via S3 plugin in payload.config.ts
+    // Local storage directory (used when STORAGE_MODE=local)
+    // Files are stored in public/media so Next.js can serve them
+    staticDir: 'public/media',
     imageSizes: [
       {
         name: 'thumbnail',

@@ -280,7 +280,7 @@ export interface Media {
   /**
    * Alternative text for accessibility and SEO. Describe what the image shows.
    */
-  alt: string;
+  alt?: string | null;
   /**
    * Optional caption displayed with the image
    */

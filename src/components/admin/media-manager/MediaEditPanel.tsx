@@ -163,64 +163,114 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[10002] flex justify-end"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000000,
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}
       onClick={onClose}
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0"
-        style={{ backgroundColor: colors.backdrop }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: colors.backdrop,
+        }}
       />
 
       {/* Panel */}
       <div
-        className="relative w-full max-w-lg h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200 border-l"
-        style={{ backgroundColor: colors.sidebarBg, borderColor: colors.border }}
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '32rem',
+          height: '100%',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: colors.sidebarBg,
+          borderLeft: `1px solid ${colors.border}`,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className="flex-shrink-0 px-6 py-5 border-b flex items-center justify-between"
-          style={{ borderColor: colors.border, backgroundColor: colors.headerBg }}
+          style={{
+            flexShrink: 0,
+            padding: '1.25rem 1.5rem',
+            borderBottom: `1px solid ${colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: colors.headerBg,
+          }}
         >
           <div>
-            <h2 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: colors.textPrimary }}>
               Edit Media
             </h2>
-            <p className="text-sm mt-0.5 truncate max-w-xs" style={{ color: colors.textSecondary }}>
+            <p style={{ fontSize: '0.875rem', marginTop: '0.125rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '20rem', color: colors.textSecondary }}>
               {media.filename}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors hover:bg-opacity-80"
-            style={{ color: colors.textMuted, backgroundColor: colors.cardBg }}
+            style={{
+              padding: '0.5rem',
+              borderRadius: '0.5rem',
+              transition: 'all 0.2s ease',
+              color: colors.textMuted,
+              backgroundColor: colors.cardBg,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hoverBg
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = colors.cardBg
+            }}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Preview */}
           {media.mimeType?.startsWith('image/') && (
             <div
-              className="aspect-video rounded-xl overflow-hidden border"
-              style={{ backgroundColor: colors.cardBg, borderColor: colors.border }}
+              style={{
+                aspectRatio: '16 / 9',
+                borderRadius: '0.75rem',
+                overflow: 'hidden',
+                border: `1px solid ${colors.border}`,
+                backgroundColor: colors.cardBg,
+              }}
             >
               <img
                 src={media.sizes?.card?.url || media.publicUrl || media.url}
                 alt={media.alt}
-                className="w-full h-full object-contain"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             </div>
           )}
 
           {/* Alt Text (required) */}
           <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
               Alt Text <span style={{ color: colors.error }}>*</span>
             </label>
             <input
@@ -228,23 +278,34 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
               value={alt}
               onChange={(e) => setAlt(e.target.value)}
               placeholder="Describe what this image shows..."
-              className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors"
               style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                fontSize: '1rem',
+                border: `1px solid ${colors.border}`,
+                borderRadius: '0.75rem',
+                outline: 'none',
+                transition: 'all 0.2s ease',
                 backgroundColor: colors.inputBg,
-                borderColor: colors.border,
                 color: colors.textPrimary,
               }}
-              onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-              onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = colors.borderFocus
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
-            <p className="text-xs mt-1.5" style={{ color: colors.textMuted }}>
+            <p style={{ fontSize: '0.75rem', marginTop: '0.375rem', color: colors.textMuted }}>
               Required for accessibility and SEO
             </p>
           </div>
 
           {/* Caption */}
           <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
               Caption
             </label>
             <input
@@ -252,20 +313,31 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Optional caption for display..."
-              className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors"
               style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                fontSize: '1rem',
+                border: `1px solid ${colors.border}`,
+                borderRadius: '0.75rem',
+                outline: 'none',
+                transition: 'all 0.2s ease',
                 backgroundColor: colors.inputBg,
-                borderColor: colors.border,
                 color: colors.textPrimary,
               }}
-              onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-              onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = colors.borderFocus
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
               Description
             </label>
             <textarea
@@ -273,33 +345,58 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detailed description for administrative purposes..."
               rows={3}
-              className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors resize-none"
               style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                fontSize: '1rem',
+                border: `1px solid ${colors.border}`,
+                borderRadius: '0.75rem',
+                outline: 'none',
+                transition: 'all 0.2s ease',
+                resize: 'none',
                 backgroundColor: colors.inputBg,
-                borderColor: colors.border,
                 color: colors.textPrimary,
               }}
-              onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-              onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = colors.borderFocus
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
           </div>
 
           {/* Media Type */}
           <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
               Media Type
             </label>
             <select
               value={mediaType}
               onChange={(e) => setMediaType(e.target.value as any)}
-              className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors appearance-none"
               style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                fontSize: '1rem',
+                border: `1px solid ${colors.border}`,
+                borderRadius: '0.75rem',
+                outline: 'none',
+                transition: 'all 0.2s ease',
+                appearance: 'none',
                 backgroundColor: colors.inputBg,
-                borderColor: colors.border,
                 color: colors.textPrimary,
+                cursor: 'pointer',
               }}
-              onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-              onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = colors.borderFocus
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             >
               <option value="image">Image</option>
               <option value="video">Video</option>
@@ -310,10 +407,10 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
               Tags
             </label>
-            <div className="flex gap-2 mb-2">
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
               <input
                 type="text"
                 value={tagInput}
@@ -325,10 +422,15 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
                   }
                 }}
                 placeholder="Add a tag..."
-                className="flex-1 px-4 py-2.5 text-sm border rounded-xl focus:outline-none transition-colors"
                 style={{
+                  flex: 1,
+                  padding: '0.625rem 1rem',
+                  fontSize: '0.875rem',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '0.75rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease',
                   backgroundColor: colors.inputBg,
-                  borderColor: colors.border,
                   color: colors.textPrimary,
                 }}
                 onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
@@ -337,29 +439,60 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
               <button
                 onClick={addTag}
                 disabled={!tagInput.trim()}
-                className="px-4 py-2.5 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 hover:bg-opacity-80"
-                style={{ backgroundColor: colors.cardBg, color: colors.textSecondary }}
+                style={{
+                  padding: '0.625rem 1rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  borderRadius: '0.75rem',
+                  transition: 'opacity 0.2s ease',
+                  opacity: !tagInput.trim() ? 0.5 : 1,
+                  cursor: !tagInput.trim() ? 'not-allowed' : 'pointer',
+                  backgroundColor: colors.cardBg,
+                  color: colors.textSecondary,
+                  border: 'none',
+                }}
+                onMouseEnter={(e) => {
+                  if (tagInput.trim()) e.currentTarget.style.opacity = '0.8'
+                }}
+                onMouseLeave={(e) => {
+                  if (tagInput.trim()) e.currentTarget.style.opacity = '1'
+                }}
               >
                 Add
               </button>
             </div>
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg"
-                    style={{ backgroundColor: colors.hoverBg, color: colors.primaryLight }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      padding: '0.375rem 0.75rem',
+                      fontSize: '0.875rem',
+                      borderRadius: '0.5rem',
+                      backgroundColor: colors.hoverBg,
+                      color: colors.primaryLight,
+                    }}
                   >
                     {tag}
                     <button
                       onClick={() => removeTag(tag)}
-                      className="p-0.5 rounded transition-colors"
-                      style={{ color: colors.textMuted }}
+                      style={{
+                        padding: '0.125rem',
+                        borderRadius: '0.25rem',
+                        transition: 'color 0.2s ease',
+                        color: colors.textMuted,
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
                       onMouseEnter={(e) => e.currentTarget.style.color = colors.error}
                       onMouseLeave={(e) => e.currentTarget.style.color = colors.textMuted}
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg style={{ width: '0.875rem', height: '0.875rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -370,23 +503,37 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
           </div>
 
           {/* Featured */}
-          <div className="flex items-center justify-between">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <label className="text-sm font-medium" style={{ color: colors.textPrimary }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.textPrimary }}>
                 Featured
               </label>
-              <p className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+              <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: colors.textMuted }}>
                 Mark as featured media for easy access
               </p>
             </div>
             <button
               onClick={() => setFeatured(!featured)}
-              className="relative w-12 h-7 rounded-full transition-colors"
-              style={{ backgroundColor: featured ? colors.primary : colors.border }}
+              style={{
+                position: 'relative',
+                width: '3rem',
+                height: '1.75rem',
+                borderRadius: '9999px',
+                transition: 'background-color 0.2s ease',
+                backgroundColor: featured ? colors.primary : colors.border,
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
               <span
-                className="absolute top-1 left-1 w-5 h-5 rounded-full transition-transform"
                 style={{
+                  position: 'absolute',
+                  top: '0.25rem',
+                  left: '0.25rem',
+                  width: '1.25rem',
+                  height: '1.25rem',
+                  borderRadius: '9999px',
+                  transition: 'transform 0.2s ease',
                   backgroundColor: colors.white,
                   transform: featured ? 'translateX(20px)' : 'translateX(0)',
                 }}
@@ -397,27 +544,187 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
           {/* Video Metadata (conditional) */}
           {mediaType === 'video' && (
             <div
-              className="p-4 rounded-xl space-y-4 border"
-              style={{ backgroundColor: colors.cardBg, borderColor: colors.border }}
+              style={{
+                padding: '1rem',
+                borderRadius: '0.75rem',
+                border: `1px solid ${colors.border}`,
+                backgroundColor: colors.cardBg,
+              }}
             >
-              <h4 className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: colors.textPrimary }}>
                 Video Settings
               </h4>
 
-              {/* Duration */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {/* Duration */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
+                    Duration (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    value={videoDuration || ''}
+                    onChange={(e) => setVideoDuration(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="Video duration in seconds"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      fontSize: '1rem',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '0.75rem',
+                      outline: 'none',
+                      transition: 'border-color 0.2s ease',
+                      backgroundColor: colors.inputBg,
+                      color: colors.textPrimary,
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
+                    onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+                  />
+                </div>
+
+                {/* Autoplay */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <label style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.textPrimary }}>
+                      Autoplay
+                    </label>
+                    <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: colors.textMuted }}>
+                      Video will start playing automatically
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setVideoAutoplay(!videoAutoplay)}
+                    style={{
+                      position: 'relative',
+                      width: '3rem',
+                      height: '1.75rem',
+                      borderRadius: '9999px',
+                      transition: 'background-color 0.2s ease',
+                      backgroundColor: videoAutoplay ? colors.primary : colors.border,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '0.25rem',
+                        left: '0.25rem',
+                        width: '1.25rem',
+                        height: '1.25rem',
+                        borderRadius: '9999px',
+                        transition: 'transform 0.2s ease',
+                        backgroundColor: colors.white,
+                        transform: videoAutoplay ? 'translateX(20px)' : 'translateX(0)',
+                      }}
+                    />
+                  </button>
+                </div>
+
+                {/* Muted */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <label style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.textPrimary }}>
+                      Start Muted
+                    </label>
+                    <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: colors.textMuted }}>
+                      Recommended for autoplay videos
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setVideoMuted(!videoMuted)}
+                    style={{
+                      position: 'relative',
+                      width: '3rem',
+                      height: '1.75rem',
+                      borderRadius: '9999px',
+                      transition: 'background-color 0.2s ease',
+                      backgroundColor: videoMuted ? colors.primary : colors.border,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '0.25rem',
+                        left: '0.25rem',
+                        width: '1.25rem',
+                        height: '1.25rem',
+                        borderRadius: '9999px',
+                        transition: 'transform 0.2s ease',
+                        backgroundColor: colors.white,
+                        transform: videoMuted ? 'translateX(20px)' : 'translateX(0)',
+                      }}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SEO Metadata */}
+          <div
+            style={{
+              padding: '1rem',
+              borderRadius: '0.75rem',
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.cardBg,
+            }}
+          >
+            <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: colors.textPrimary }}>
+              SEO & Attribution
+            </h4>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Focus Keywords */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
-                  Duration (seconds)
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
+                  Focus Keywords
                 </label>
                 <input
-                  type="number"
-                  value={videoDuration || ''}
-                  onChange={(e) => setVideoDuration(e.target.value ? Number(e.target.value) : undefined)}
-                  placeholder="Video duration in seconds"
-                  className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors"
+                  type="text"
+                  value={seoKeywords}
+                  onChange={(e) => setSeoKeywords(e.target.value)}
+                  placeholder="e.g., grand-piano, kawai, black-finish"
                   style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    fontSize: '1rem',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '0.75rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
                     backgroundColor: colors.inputBg,
-                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
+                  onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+                />
+                <p style={{ fontSize: '0.75rem', marginTop: '0.375rem', color: colors.textMuted }}>
+                  Comma-separated keywords for SEO
+                </p>
+              </div>
+
+              {/* Photographer Credit */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
+                  Photographer Credit
+                </label>
+                <input
+                  type="text"
+                  value={seoPhotographer}
+                  onChange={(e) => setSeoPhotographer(e.target.value)}
+                  placeholder="Photo credit"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    fontSize: '1rem',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '0.75rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    backgroundColor: colors.inputBg,
                     color: colors.textPrimary,
                   }}
                   onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
@@ -425,209 +732,170 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
                 />
               </div>
 
-              {/* Autoplay */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium" style={{ color: colors.textPrimary }}>
-                    Autoplay
-                  </label>
-                  <p className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-                    Video will start playing automatically
-                  </p>
-                </div>
-                <button
-                  onClick={() => setVideoAutoplay(!videoAutoplay)}
-                  className="relative w-12 h-7 rounded-full transition-colors"
-                  style={{ backgroundColor: videoAutoplay ? colors.primary : colors.border }}
-                >
-                  <span
-                    className="absolute top-1 left-1 w-5 h-5 rounded-full transition-transform"
-                    style={{
-                      backgroundColor: colors.white,
-                      transform: videoAutoplay ? 'translateX(20px)' : 'translateX(0)',
-                    }}
-                  />
-                </button>
+              {/* Copyright Info */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
+                  Copyright Information
+                </label>
+                <input
+                  type="text"
+                  value={seoCopyright}
+                  onChange={(e) => setSeoCopyright(e.target.value)}
+                  placeholder="Copyright or licensing info"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    fontSize: '1rem',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '0.75rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    backgroundColor: colors.inputBg,
+                    color: colors.textPrimary,
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
+                  onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+                />
               </div>
 
-              {/* Muted */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium" style={{ color: colors.textPrimary }}>
-                    Start Muted
-                  </label>
-                  <p className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-                    Recommended for autoplay videos
-                  </p>
-                </div>
-                <button
-                  onClick={() => setVideoMuted(!videoMuted)}
-                  className="relative w-12 h-7 rounded-full transition-colors"
-                  style={{ backgroundColor: videoMuted ? colors.primary : colors.border }}
-                >
-                  <span
-                    className="absolute top-1 left-1 w-5 h-5 rounded-full transition-transform"
-                    style={{
-                      backgroundColor: colors.white,
-                      transform: videoMuted ? 'translateX(20px)' : 'translateX(0)',
-                    }}
-                  />
-                </button>
+              {/* Original Source */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: colors.textPrimary }}>
+                  Original Source
+                </label>
+                <input
+                  type="text"
+                  value={seoSource}
+                  onChange={(e) => setSeoSource(e.target.value)}
+                  placeholder="Original source URL"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    fontSize: '1rem',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '0.75rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease',
+                    backgroundColor: colors.inputBg,
+                    color: colors.textPrimary,
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
+                  onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
+                />
               </div>
-            </div>
-          )}
-
-          {/* SEO Metadata */}
-          <div
-            className="p-4 rounded-xl space-y-4 border"
-            style={{ backgroundColor: colors.cardBg, borderColor: colors.border }}
-          >
-            <h4 className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
-              SEO & Attribution
-            </h4>
-
-            {/* Focus Keywords */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
-                Focus Keywords
-              </label>
-              <input
-                type="text"
-                value={seoKeywords}
-                onChange={(e) => setSeoKeywords(e.target.value)}
-                placeholder="e.g., grand-piano, kawai, black-finish"
-                className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors"
-                style={{
-                  backgroundColor: colors.inputBg,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-                onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
-              />
-              <p className="text-xs mt-1.5" style={{ color: colors.textMuted }}>
-                Comma-separated keywords for SEO
-              </p>
-            </div>
-
-            {/* Photographer Credit */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
-                Photographer Credit
-              </label>
-              <input
-                type="text"
-                value={seoPhotographer}
-                onChange={(e) => setSeoPhotographer(e.target.value)}
-                placeholder="Photo credit"
-                className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors"
-                style={{
-                  backgroundColor: colors.inputBg,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-                onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
-              />
-            </div>
-
-            {/* Copyright Info */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
-                Copyright Information
-              </label>
-              <input
-                type="text"
-                value={seoCopyright}
-                onChange={(e) => setSeoCopyright(e.target.value)}
-                placeholder="Copyright or licensing info"
-                className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors"
-                style={{
-                  backgroundColor: colors.inputBg,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-                onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
-              />
-            </div>
-
-            {/* Original Source */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: colors.textPrimary }}>
-                Original Source
-              </label>
-              <input
-                type="text"
-                value={seoSource}
-                onChange={(e) => setSeoSource(e.target.value)}
-                placeholder="Original source URL"
-                className="w-full px-4 py-3 text-base border rounded-xl focus:outline-none transition-colors"
-                style={{
-                  backgroundColor: colors.inputBg,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = colors.borderFocus}
-                onBlur={(e) => e.currentTarget.style.borderColor = colors.border}
-              />
             </div>
           </div>
 
           {/* File Info */}
           <div
-            className="p-4 rounded-xl border"
-            style={{ backgroundColor: colors.cardBg, borderColor: colors.border }}
+            style={{
+              padding: '1rem',
+              borderRadius: '0.75rem',
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.cardBg,
+            }}
           >
-            <h4 className="text-sm font-medium mb-3" style={{ color: colors.textPrimary }}>
+            <h4 style={{ fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.75rem', color: colors.textPrimary }}>
               File Information
             </h4>
-            <dl className="space-y-2 text-sm">
+            <dl style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
               {media.width && media.height && (
-                <div className="flex justify-between">
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <dt style={{ color: colors.textMuted }}>Dimensions</dt>
-                  <dd style={{ color: colors.textSecondary }}>{media.width} × {media.height}px</dd>
+                  <dd style={{ color: colors.textSecondary, margin: 0 }}>{media.width} × {media.height}px</dd>
                 </div>
               )}
-              <div className="flex justify-between">
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <dt style={{ color: colors.textMuted }}>File Size</dt>
-                <dd style={{ color: colors.textSecondary }}>{formatFileSize(media.filesize)}</dd>
+                <dd style={{ color: colors.textSecondary, margin: 0 }}>{formatFileSize(media.filesize)}</dd>
               </div>
-              <div className="flex justify-between">
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <dt style={{ color: colors.textMuted }}>Type</dt>
-                <dd style={{ color: colors.textSecondary }}>{media.mimeType}</dd>
+                <dd style={{ color: colors.textSecondary, margin: 0 }}>{media.mimeType}</dd>
               </div>
-              <div className="flex justify-between">
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <dt style={{ color: colors.textMuted }}>Created</dt>
-                <dd style={{ color: colors.textSecondary }}>{formatDate(media.createdAt)}</dd>
+                <dd style={{ color: colors.textSecondary, margin: 0 }}>{formatDate(media.createdAt)}</dd>
               </div>
             </dl>
+          </div>
           </div>
         </div>
 
         {/* Footer */}
         <div
-          className="flex-shrink-0 px-6 py-4 border-t flex items-center justify-between"
-          style={{ backgroundColor: colors.headerBg, borderColor: colors.border }}
+          style={{
+            flexShrink: 0,
+            padding: '1rem 1.5rem',
+            borderTop: `1px solid ${colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: colors.headerBg,
+          }}
         >
           <button
             onClick={onClose}
-            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-colors hover:bg-opacity-80"
-            style={{ color: colors.textSecondary, backgroundColor: colors.cardBg }}
+            style={{
+              padding: '0.625rem 1.25rem',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              borderRadius: '0.75rem',
+              transition: 'all 0.2s ease',
+              color: colors.textSecondary,
+              backgroundColor: colors.cardBg,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.8'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1'
+            }}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!hasChanges || !alt.trim() || isSaving}
-            className="px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 hover:bg-opacity-90"
-            style={{ backgroundColor: colors.primary, color: colors.white }}
+            style={{
+              padding: '0.625rem 1.5rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: '0.75rem',
+              transition: 'all 0.2s ease',
+              backgroundColor: colors.primary,
+              color: colors.white,
+              border: 'none',
+              cursor: (!hasChanges || !alt.trim() || isSaving) ? 'not-allowed' : 'pointer',
+              opacity: (!hasChanges || !alt.trim() || isSaving) ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+            onMouseEnter={(e) => {
+              if (hasChanges && alt.trim() && !isSaving) {
+                e.currentTarget.style.opacity = '0.9'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (hasChanges && alt.trim() && !isSaving) {
+                e.currentTarget.style.opacity = '1'
+              }
+            }}
           >
             {isSaving ? (
               <>
                 <div
-                  className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent"
-                  style={{ borderColor: colors.white, borderTopColor: 'transparent' }}
+                  style={{
+                    animation: 'spin 1s linear infinite',
+                    borderRadius: '9999px',
+                    height: '1rem',
+                    width: '1rem',
+                    border: `2px solid ${colors.white}`,
+                    borderTopColor: 'transparent',
+                  }}
                 />
                 Saving...
               </>
@@ -637,6 +905,13 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
           </button>
         </div>
       </div>
+      {/* Keyframes for animations */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }

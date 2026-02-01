@@ -49,6 +49,18 @@ const colors = {
   black: '#000000',
 }
 
+// Keyframe animations
+const spinKeyframes = `
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+`
+
 /**
  * Grid display of media items with selection and actions
  */
@@ -69,43 +81,79 @@ export function MediaGrid() {
 
   if (isLoading && media.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full" style={{ backgroundColor: colors.contentBg }}>
-        <div className="text-center">
-          <div
-            className="animate-spin rounded-full h-12 w-12 border-3 border-t-transparent mx-auto mb-4"
-            style={{ borderColor: colors.primary, borderTopColor: 'transparent' }}
-          />
-          <p className="text-base font-medium" style={{ color: colors.textSecondary }}>Loading media...</p>
+      <>
+        <style>{spinKeyframes}</style>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          backgroundColor: colors.contentBg
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                animation: 'spin 1s linear infinite',
+                borderRadius: '9999px',
+                height: '48px',
+                width: '48px',
+                border: '3px solid',
+                borderColor: colors.primary,
+                borderTopColor: 'transparent',
+                margin: '0 auto 16px'
+              }}
+            />
+            <p style={{ fontSize: '16px', fontWeight: 500, color: colors.textSecondary }}>Loading media...</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   if (media.length === 0) {
     return (
       <div
-        className="flex flex-col items-center justify-center h-full p-12"
-        style={{ backgroundColor: colors.contentBg }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          padding: '48px',
+          backgroundColor: colors.contentBg
+        }}
       >
         <div
-          className="w-28 h-28 mb-8 rounded-2xl flex items-center justify-center"
-          style={{ backgroundColor: colors.cardBg }}
+          style={{
+            width: '112px',
+            height: '112px',
+            marginBottom: '32px',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.cardBg
+          }}
         >
-          <svg className="w-14 h-14" style={{ color: colors.textMuted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg style={{ width: '56px', height: '56px', color: colors.textMuted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <p className="text-xl font-semibold mb-3" style={{ color: colors.textPrimary }}>No media found</p>
-        <p className="text-base" style={{ color: colors.textSecondary }}>Drag and drop files here or click Upload to add media</p>
+        <p style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px', color: colors.textPrimary }}>No media found</p>
+        <p style={{ fontSize: '16px', color: colors.textSecondary }}>Drag and drop files here or click Upload to add media</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: colors.contentBg }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: colors.contentBg }}>
       {/* Grid - Larger items with fewer columns */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: '20px'
+        }}>
           {media.map((item) => (
             <MediaGridItem
               key={item.id}
@@ -124,21 +172,42 @@ export function MediaGrid() {
       {/* Pagination - Larger */}
       {totalPages > 1 && (
         <div
-          className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-4 border-t"
-          style={{ backgroundColor: colors.headerBg, borderColor: colors.border }}
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            padding: '16px 24px',
+            borderTop: `1px solid ${colors.border}`,
+            backgroundColor: colors.headerBg
+          }}
         >
           <button
             onClick={() => fetchMedia(currentPage - 1)}
             disabled={currentPage === 1}
-            className="flex items-center gap-2 px-4 py-2 text-base font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-opacity-80"
-            style={{ backgroundColor: colors.cardBg, color: colors.textSecondary }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              fontSize: '16px',
+              fontWeight: 500,
+              borderRadius: '8px',
+              transition: 'all 0.2s ease',
+              opacity: currentPage === 1 ? 0.4 : 1,
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              backgroundColor: colors.cardBg,
+              color: colors.textSecondary,
+              border: 'none'
+            }}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: '20px', height: '20px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Previous
           </button>
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let pageNum
               if (totalPages <= 5) {
@@ -154,10 +223,17 @@ export function MediaGrid() {
                 <button
                   key={pageNum}
                   onClick={() => fetchMedia(pageNum)}
-                  className="w-10 h-10 text-base font-semibold rounded-lg transition-colors hover:bg-opacity-80"
                   style={{
+                    width: '40px',
+                    height: '40px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease',
                     backgroundColor: currentPage === pageNum ? colors.primary : colors.cardBg,
                     color: currentPage === pageNum ? colors.white : colors.textSecondary,
+                    border: 'none',
+                    cursor: 'pointer'
                   }}
                 >
                   {pageNum}
@@ -168,11 +244,24 @@ export function MediaGrid() {
           <button
             onClick={() => fetchMedia(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="flex items-center gap-2 px-4 py-2 text-base font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-opacity-80"
-            style={{ backgroundColor: colors.cardBg, color: colors.textSecondary }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              fontSize: '16px',
+              fontWeight: 500,
+              borderRadius: '8px',
+              transition: 'all 0.2s ease',
+              opacity: currentPage === totalPages ? 0.4 : 1,
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              backgroundColor: colors.cardBg,
+              color: colors.textSecondary,
+              border: 'none'
+            }}
           >
             Next
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: '20px', height: '20px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -201,6 +290,7 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
   const [showFolderMenu, setShowFolderMenu] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const moreButtonRef = useRef<HTMLButtonElement>(null)
+  const leaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isImage = item.mimeType?.startsWith('image/')
   const thumbnailUrl = item.sizes?.thumbnail?.url || item.publicUrl || item.url
 
@@ -220,38 +310,78 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
     }
   }, [showActions])
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) {
+        clearTimeout(leaveTimerRef.current)
+      }
+    }
+  }, [])
+
   return (
     <div
-      className="relative group rounded-xl cursor-pointer transition-all duration-200"
       style={{
+        position: 'relative',
+        borderRadius: '12px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
         boxShadow: isSelected
           ? `0 0 0 3px ${colors.primary}, 0 4px 12px rgba(59, 130, 246, 0.3)`
           : isHovered
             ? `0 4px 20px rgba(0, 0, 0, 0.4)`
             : `0 2px 8px rgba(0, 0, 0, 0.2)`,
-        transform: isSelected ? 'scale(1.02)' : isHovered ? 'translateY(-2px)' : undefined,
+        transform: isSelected ? 'scale(1.02)' : isHovered ? 'translateY(-2px)' : 'none',
         backgroundColor: colors.cardBg,
         border: `1px solid ${colors.border}`,
       }}
-      onClick={onSelect}
-      onMouseEnter={() => setIsHovered(true)}
+      // TEMPORARILY DISABLED FOR TESTING
+      // onClick={(e) => {
+      //   const target = e.target as HTMLElement
+      //   if (target.closest('button')) {
+      //     return
+      //   }
+      //   onSelect()
+      // }}
+      onMouseEnter={() => {
+        // Clear any pending leave timer
+        if (leaveTimerRef.current) {
+          clearTimeout(leaveTimerRef.current)
+          leaveTimerRef.current = null
+        }
+        setIsHovered(true)
+      }}
       onMouseLeave={() => {
-        setIsHovered(false)
-        setShowActions(false)
-        setShowFolderMenu(false)
+        // Delay hiding buttons to allow clicking them
+        leaveTimerRef.current = setTimeout(() => {
+          setIsHovered(false)
+        }, 300)
       }}
     >
       {/* Thumbnail - Larger aspect ratio */}
-      <div className="aspect-[4/3] rounded-t-xl overflow-hidden" style={{ backgroundColor: colors.inputBg }}>
+      <div style={{
+        aspectRatio: '4/3',
+        borderTopLeftRadius: '12px',
+        borderTopRightRadius: '12px',
+        overflow: 'hidden',
+        backgroundColor: colors.inputBg
+      }}>
         {isImage ? (
           <img
             src={thumbnailUrl}
             alt={item.alt || item.filename}
-            className="w-full h-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: colors.inputBg }}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.inputBg
+          }}>
             <FileIcon mimeType={item.mimeType} />
           </div>
         )}
@@ -259,22 +389,37 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
 
       {/* Filename bar - Always visible, solid background */}
       <div
-        className="px-3 py-2.5 border-t rounded-b-xl"
         style={{
+          padding: '10px 12px',
+          borderTop: `1px solid ${colors.border}`,
+          borderBottomLeftRadius: '12px',
+          borderBottomRightRadius: '12px',
           backgroundColor: colors.cardBg,
-          borderColor: colors.border,
         }}
       >
         <p
-          className="text-sm font-medium truncate"
-          style={{ color: colors.textPrimary }}
+          style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: colors.textPrimary
+          }}
           title={item.filename}
         >
           {item.filename}
         </p>
         {currentFolderName && (
-          <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: colors.textMuted }}>
-            <svg className="w-3 h-3" style={{ color: colors.gold }} fill="currentColor" viewBox="0 0 24 24">
+          <p style={{
+            fontSize: '12px',
+            marginTop: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            color: colors.textMuted
+          }}>
+            <svg style={{ width: '12px', height: '12px', color: colors.gold }} fill="currentColor" viewBox="0 0 24 24">
               <path d="M3 7V17a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6.586a1 1 0 01-.707-.293L10 5H5a2 2 0 00-2 2z" />
             </svg>
             {currentFolderName}
@@ -284,53 +429,91 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
 
       {/* Hover overlay for actions */}
       <div
-        className="absolute inset-0 transition-opacity duration-200 pointer-events-none"
         style={{
+          position: 'absolute',
+          inset: 0,
+          transition: 'opacity 0.2s ease',
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.4), transparent 50%)',
           opacity: isHovered ? 1 : 0,
+          pointerEvents: 'none',
         }}
       />
 
-      {/* Action buttons - Top right */}
-      {isHovered && (
-        <div className="absolute top-3 right-3 flex gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onCopyUrl()
-            }}
-            className="p-2 rounded-lg shadow-md transition-all hover:scale-105"
-            style={{ backgroundColor: colors.cardBg, color: colors.textPrimary, border: `1px solid ${colors.border}` }}
-            title="Copy URL"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </button>
-          <button
-            ref={moreButtonRef}
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowActions(!showActions)
-              setShowFolderMenu(false)
-            }}
-            className="p-2 rounded-lg shadow-md transition-all hover:scale-105"
-            style={{ backgroundColor: colors.cardBg, color: colors.textPrimary, border: `1px solid ${colors.border}` }}
-            title="More actions"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
-          </button>
-        </div>
-      )}
+      {/* Action buttons - Top right - ALWAYS VISIBLE FOR TESTING */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '12px',
+          right: '12px',
+          display: 'flex',
+          gap: '8px',
+          zIndex: 9999,
+        }}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            alert('Copy button clicked!')
+            e.stopPropagation()
+            onCopyUrl()
+          }}
+          style={{
+            padding: '8px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            transition: 'transform 0.2s ease',
+            backgroundColor: colors.cardBg,
+            color: colors.textPrimary,
+            border: `1px solid ${colors.border}`,
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="Copy URL"
+        >
+          <svg style={{ width: '20px', height: '20px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          ref={moreButtonRef}
+          onClick={(e) => {
+            alert('3-dot menu clicked!')
+            e.stopPropagation()
+            setShowActions(prev => !prev)
+            setShowFolderMenu(false)
+          }}
+          style={{
+            padding: '8px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            transition: 'transform 0.2s ease',
+            backgroundColor: colors.cardBg,
+            color: colors.textPrimary,
+            border: `1px solid ${colors.border}`,
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="More actions"
+        >
+          <svg style={{ width: '20px', height: '20px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+          </svg>
+        </button>
+      </div>
 
       {/* Dropdown menu - rendered in portal for proper positioning */}
       {showActions && typeof document !== 'undefined' && createPortal(
         <>
           {/* Backdrop to close dropdown */}
           <div
-            className="fixed inset-0 z-[10000]"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 10000,
+            }}
             onClick={(e) => {
               e.stopPropagation()
               setShowActions(false)
@@ -338,10 +521,14 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
             }}
           />
           <div
-            className="fixed rounded-xl shadow-2xl border py-2 z-[10001]"
             style={{
+              position: 'fixed',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+              border: `1px solid ${colors.border}`,
+              padding: '8px 0',
+              zIndex: 10001,
               backgroundColor: colors.cardBg,
-              borderColor: colors.border,
               top: dropdownPosition.top,
               left: dropdownPosition.left,
               minWidth: 200,
@@ -349,24 +536,37 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
             onClick={(e) => e.stopPropagation()}
           >
             {/* Move to folder option */}
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   setShowFolderMenu(!showFolderMenu)
                 }}
-                className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm w-full transition-colors hover:bg-opacity-80"
-                style={{ color: colors.textPrimary, backgroundColor: 'transparent' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  width: '100%',
+                  transition: 'background-color 0.2s ease',
+                  color: colors.textPrimary,
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hoverBg}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5" style={{ color: colors.gold }} fill="currentColor" viewBox="0 0 24 24">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <svg style={{ width: '20px', height: '20px', color: colors.gold, pointerEvents: 'none' }} fill="currentColor" viewBox="0 0 24 24">
                     <path d="M3 7V17a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6.586a1 1 0 01-.707-.293L10 5H5a2 2 0 00-2 2z" />
                   </svg>
                   <span>Move to folder</span>
                 </div>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style={{ width: '16px', height: '16px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -374,8 +574,18 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
               {/* Folder submenu */}
               {showFolderMenu && (
                 <div
-                  className="absolute left-full top-0 ml-1 rounded-xl shadow-2xl border py-2 min-w-[180px]"
-                  style={{ backgroundColor: colors.cardBg, borderColor: colors.border }}
+                  style={{
+                    position: 'absolute',
+                    left: '100%',
+                    top: 0,
+                    marginLeft: '4px',
+                    borderRadius: '12px',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+                    border: `1px solid ${colors.border}`,
+                    padding: '8px 0',
+                    minWidth: '180px',
+                    backgroundColor: colors.cardBg,
+                  }}
                 >
                   {/* Root option */}
                   <button
@@ -385,21 +595,30 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
                       setShowActions(false)
                       setShowFolderMenu(false)
                     }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm w-full transition-colors"
                     style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 16px',
+                      fontSize: '14px',
+                      width: '100%',
+                      transition: 'background-color 0.2s ease',
                       color: colors.textPrimary,
                       backgroundColor: !item.folder ? colors.hoverBg : 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left'
                     }}
                     onMouseEnter={(e) => !item.folder ? null : e.currentTarget.style.backgroundColor = colors.hoverBg}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = !item.folder ? colors.hoverBg : 'transparent'}
                   >
-                    <svg className="w-4 h-4" style={{ color: colors.textMuted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg style={{ width: '16px', height: '16px', color: colors.textMuted, pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span>Root (No folder)</span>
                   </button>
                   {folders.length > 0 && (
-                    <div className="border-t my-1" style={{ borderColor: colors.border }} />
+                    <div style={{ borderTop: `1px solid ${colors.border}`, margin: '4px 0' }} />
                   )}
                   {folders.map((folder) => {
                     const isCurrentFolder = typeof item.folder === 'object'
@@ -414,20 +633,29 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
                           setShowActions(false)
                           setShowFolderMenu(false)
                         }}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm w-full transition-colors"
                         style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 16px',
+                          fontSize: '14px',
+                          width: '100%',
+                          transition: 'background-color 0.2s ease',
                           color: colors.textPrimary,
                           backgroundColor: isCurrentFolder ? colors.hoverBg : 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left'
                         }}
                         onMouseEnter={(e) => isCurrentFolder ? null : e.currentTarget.style.backgroundColor = colors.hoverBg}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isCurrentFolder ? colors.hoverBg : 'transparent'}
                       >
-                        <svg className="w-4 h-4" style={{ color: colors.gold }} fill="currentColor" viewBox="0 0 24 24">
+                        <svg style={{ width: '16px', height: '16px', color: colors.gold, pointerEvents: 'none' }} fill="currentColor" viewBox="0 0 24 24">
                           <path d="M3 7V17a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6.586a1 1 0 01-.707-.293L10 5H5a2 2 0 00-2 2z" />
                         </svg>
                         <span>{folder.name}</span>
                         {isCurrentFolder && (
-                          <svg className="w-4 h-4 ml-auto" style={{ color: colors.primary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg style={{ width: '16px', height: '16px', marginLeft: 'auto', color: colors.primary, pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -438,25 +666,35 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
               )}
             </div>
 
-            <div className="border-t my-1" style={{ borderColor: colors.border }} />
+            <div style={{ borderTop: `1px solid ${colors.border}`, margin: '4px 0' }} />
 
             <a
               href={item.publicUrl || item.url}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-              style={{ color: colors.textPrimary, backgroundColor: 'transparent' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                transition: 'background-color 0.2s ease',
+                color: colors.textPrimary,
+                backgroundColor: 'transparent',
+                textDecoration: 'none',
+                cursor: 'pointer'
+              }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hoverBg}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '20px', height: '20px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
               Open in new tab
             </a>
 
-            <div className="border-t my-1" style={{ borderColor: colors.border }} />
+            <div style={{ borderTop: `1px solid ${colors.border}`, margin: '4px 0' }} />
 
             <button
               onClick={(e) => {
@@ -465,12 +703,24 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
                   onDelete()
                 }
               }}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm w-full transition-colors"
-              style={{ color: colors.error, backgroundColor: 'transparent' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                width: '100%',
+                transition: 'background-color 0.2s ease',
+                color: colors.error,
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.errorBg}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '20px', height: '20px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               Delete
@@ -483,10 +733,21 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
       {/* Selection indicator */}
       {isSelected && (
         <div
-          className="absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center shadow-lg"
-          style={{ backgroundColor: colors.primary }}
+          style={{
+            position: 'absolute',
+            top: '12px',
+            left: '12px',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+            backgroundColor: colors.primary,
+          }}
         >
-          <svg className="w-4 h-4" style={{ color: colors.white }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg style={{ width: '16px', height: '16px', color: colors.white }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -499,12 +760,12 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
  * File type icon for non-image files
  */
 function FileIcon({ mimeType }: { mimeType: string }) {
-  const iconClass = "w-12 h-12"
+  const iconStyle = { width: '48px', height: '48px' }
 
   if (mimeType?.startsWith('video/')) {
     return (
-      <div className="p-4 rounded-xl" style={{ backgroundColor: colors.hoverBg }}>
-        <svg className={iconClass} style={{ color: colors.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.hoverBg }}>
+        <svg style={{ ...iconStyle, color: colors.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       </div>
@@ -513,8 +774,8 @@ function FileIcon({ mimeType }: { mimeType: string }) {
 
   if (mimeType?.startsWith('audio/')) {
     return (
-      <div className="p-4 rounded-xl" style={{ backgroundColor: colors.hoverBg }}>
-        <svg className={iconClass} style={{ color: colors.success }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.hoverBg }}>
+        <svg style={{ ...iconStyle, color: colors.success }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
         </svg>
       </div>
@@ -523,8 +784,8 @@ function FileIcon({ mimeType }: { mimeType: string }) {
 
   if (mimeType === 'application/pdf') {
     return (
-      <div className="p-4 rounded-xl" style={{ backgroundColor: colors.errorBg }}>
-        <svg className={iconClass} style={{ color: colors.error }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.errorBg }}>
+        <svg style={{ ...iconStyle, color: colors.error }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       </div>
@@ -532,8 +793,8 @@ function FileIcon({ mimeType }: { mimeType: string }) {
   }
 
   return (
-    <div className="p-4 rounded-xl" style={{ backgroundColor: colors.hoverBg }}>
-      <svg className={iconClass} style={{ color: colors.textMuted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: colors.hoverBg }}>
+      <svg style={{ ...iconStyle, color: colors.textMuted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     </div>
