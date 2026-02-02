@@ -17,6 +17,7 @@ interface ExtendedState extends MediaManagerState {
   editingFile: File | null
   metadataEditingFile: File | null
   editingMedia: MediaItem | null
+  editingMediaId: string | null // Track which media item is being re-edited via ImageEditor
   pendingFiles: File[]
   modalOptions: import('./types').MediaManagerModalOptions | null
 }
@@ -36,6 +37,7 @@ const initialState: ExtendedState = {
   editingFile: null,
   metadataEditingFile: null,
   editingMedia: null,
+  editingMediaId: null,
   pendingFiles: [],
   modalOptions: null,
   // Folder state
@@ -53,14 +55,17 @@ interface ExtendedContextValue extends MediaManagerContextValue {
   editingFile: File | null
   metadataEditingFile: File | null
   editingMedia: MediaItem | null
+  editingMediaId: string | null
   pendingFiles: File[]
   modalOptions: import('./types').MediaManagerModalOptions | null
   setEditingFile: (file: File | null) => void
   setMetadataEditingFile: (file: File | null) => void
   setEditingMedia: (media: MediaItem | null) => void
+  editMediaImage: (media: MediaItem) => Promise<void>
   handleFilesSelected: (files: FileList | File[]) => void
   moveToMetadataEditing: (file: File) => void
   uploadWithMetadata: (file: File, metadata: any) => void
+  uploadEditedFile: (file: File) => Promise<void>
   skipEditing: () => void
 }
 
@@ -500,6 +505,9 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     setState(prev => ({ ...prev, isUploading: true }))
 
     try {
+      // Check if we're editing an existing media item
+      const isUpdating = state.editingMediaId !== null
+
       const formData = new FormData()
       formData.append('file', file)
 
@@ -510,14 +518,17 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
       // Include folder if uploading to a specific folder
       const payload: Record<string, any> = { alt: altText }
-      if (state.currentFolder) {
+      if (state.currentFolder && !isUpdating) {
         payload.folder = state.currentFolder.id
       }
 
       formData.append('_payload', JSON.stringify(payload))
 
-      const response = await fetch('/api/media', {
-        method: 'POST',
+      const url = isUpdating ? `/api/media/${state.editingMediaId}` : '/api/media'
+      const method = isUpdating ? 'PATCH' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         credentials: 'include', // CRITICAL: Include auth cookies
         body: formData,
       })
@@ -525,10 +536,10 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       if (!response.ok) {
         // Log the actual error response for debugging
         const errorText = await response.text()
-        console.error(`Upload failed for ${file.name}:`, response.status, errorText)
+        console.error(`${isUpdating ? 'Update' : 'Upload'} failed for ${file.name}:`, response.status, errorText)
 
         // Provide specific error messages based on status code
-        let userMessage = `Failed to upload ${file.name}`
+        let userMessage = `Failed to ${isUpdating ? 'update' : 'upload'} ${file.name}`
         if (response.status === 401 || response.status === 403) {
           userMessage = 'Authentication required. Please log in to upload files.'
         } else if (response.status === 413) {
@@ -548,18 +559,19 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
           isUploading: false,
           pendingFiles: remainingFiles,
           editingFile: remainingFiles[0] || null,
+          editingMediaId: remainingFiles.length > 0 ? prev.editingMediaId : null, // Clear ID when done
         }
       })
 
-      await fetchMedia(1)
-      showToast('success', `Uploaded ${file.name}`)
+      await fetchMedia(state.currentPage) // Refresh current page, not page 1
+      showToast('success', isUpdating ? `Updated ${file.name}` : `Uploaded ${file.name}`)
     } catch (error) {
       console.error('Upload error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Upload failed'
       setState(prev => ({ ...prev, isUploading: false }))
       showToast('error', errorMessage)
     }
-  }, [fetchMedia, showToast, state.currentFolder])
+  }, [fetchMedia, showToast, state.currentFolder, state.editingMediaId, state.currentPage])
 
   // Skip editing current file
   const skipEditing = useCallback(() => {
@@ -697,7 +709,12 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
   // Set editing file
   const setEditingFile = useCallback((file: File | null) => {
-    setState(prev => ({ ...prev, editingFile: file }))
+    setState(prev => ({
+      ...prev,
+      editingFile: file,
+      // Clear editingMediaId when closing editor without a file
+      editingMediaId: file ? prev.editingMediaId : null,
+    }))
   }, [])
 
   // Set metadata editing file
@@ -709,6 +726,38 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
   const setEditingMedia = useCallback((media: MediaItem | null) => {
     setState(prev => ({ ...prev, editingMedia: media }))
   }, [])
+
+  // Edit existing media image (download and open in ImageEditor)
+  const editMediaImage = useCallback(async (media: MediaItem) => {
+    try {
+      showToast('info', 'Loading image for editing...')
+
+      // Download the image
+      const url = media.publicUrl || media.url
+      const response = await fetch(url)
+
+      if (!response.ok) {
+        throw new Error('Failed to download image')
+      }
+
+      const blob = await response.blob()
+
+      // Convert blob to File with original filename
+      const file = new File([blob], media.filename, { type: media.mimeType })
+
+      // Set as editing file and track the media ID for updating
+      setState(prev => ({
+        ...prev,
+        editingFile: file,
+        editingMediaId: media.id,
+      }))
+
+      showToast('success', 'Image loaded - you can now crop and edit')
+    } catch (error) {
+      console.error('Failed to load image for editing:', error)
+      showToast('error', 'Failed to load image for editing')
+    }
+  }, [showToast])
 
   // Legacy upload function (now redirects to handleFilesSelected)
   const uploadFiles = useCallback(async (files: FileList | File[]) => {
@@ -793,6 +842,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       editingFile: null,
       metadataEditingFile: null,
       editingMedia: null,
+      editingMediaId: null,
       pendingFiles: [],
       modalOptions: null,
     }))
@@ -860,9 +910,11 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     setEditingFile,
     setMetadataEditingFile,
     setEditingMedia,
+    editMediaImage,
     handleFilesSelected,
     moveToMetadataEditing,
     uploadWithMetadata,
+    uploadEditedFile,
     skipEditing,
     // Folder actions
     fetchFolders,

@@ -74,11 +74,13 @@ export function MediaManagerModal() {
     editingFile,
     metadataEditingFile,
     editingMedia,
+    editingMediaId,
     setEditingFile,
     setMetadataEditingFile,
     setEditingMedia,
     moveToMetadataEditing,
     uploadWithMetadata,
+    uploadEditedFile,
     skipEditing,
     pendingFiles,
     currentFolder,
@@ -1046,8 +1048,15 @@ export function MediaManagerModal() {
         <ImageEditor
           file={editingFile}
           onSave={(editedFile) => {
-            console.log('✅ [IMAGE EDITOR] Save clicked, moving to metadata')
-            moveToMetadataEditing(editedFile)
+            // If editing existing media, update it directly (skip metadata form)
+            if (editingMediaId) {
+              console.log('✅ [IMAGE EDITOR] Updating existing media item:', editingMediaId)
+              uploadEditedFile(editedFile)
+            } else {
+              // New upload - go through metadata form
+              console.log('✅ [IMAGE EDITOR] Save clicked, moving to metadata')
+              moveToMetadataEditing(editedFile)
+            }
           }}
           onCancel={() => {
             console.log('❌ [IMAGE EDITOR] Cancel clicked')

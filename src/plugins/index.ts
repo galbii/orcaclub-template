@@ -3,7 +3,7 @@ import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
-import { r2Storage } from '@payloadcms/storage-r2'
+import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
@@ -34,7 +34,7 @@ export const plugins: Plugin[] = [
   // Conditionally add R2 storage plugin if STORAGE_MODE=r2
   ...(useR2Storage && process.env.R2_BUCKET
     ? [
-        r2Storage({
+        s3Storage({
           collections: {
             media: true, // Enable R2 storage for Media collection
           },

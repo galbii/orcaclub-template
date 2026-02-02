@@ -653,7 +653,6 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
                       padding: '10px',
                       borderTopLeftRadius: '8px',
                       borderBottomLeftRadius: '8px',
-                      borderRight: `1px solid ${colors.slate200}`,
                       backgroundColor: 'transparent',
                       color: colors.slate600,
                       cursor: 'pointer',

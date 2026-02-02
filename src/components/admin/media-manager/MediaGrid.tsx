@@ -72,6 +72,7 @@ export function MediaGrid() {
     selectMedia,
     copyPublicUrl,
     deleteMedia,
+    editMediaImage,
     currentPage,
     totalPages,
     fetchMedia,
@@ -162,6 +163,7 @@ export function MediaGrid() {
               onSelect={() => selectMedia(selectedMedia?.id === item.id ? null : item)}
               onCopyUrl={() => copyPublicUrl(item.publicUrl || item.url)}
               onDelete={() => deleteMedia(item.id)}
+              onEditImage={() => editMediaImage(item)}
               folders={folders}
               onMoveToFolder={(folderId) => moveMediaToFolder(item.id, folderId)}
             />
@@ -277,6 +279,7 @@ interface MediaGridItemProps {
   onSelect: () => void
   onCopyUrl: () => void
   onDelete: () => void
+  onEditImage: () => void
   folders: FolderItem[]
   onMoveToFolder: (folderId: string | null) => void
 }
@@ -284,7 +287,7 @@ interface MediaGridItemProps {
 /**
  * Individual media item in the grid
  */
-function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folders, onMoveToFolder }: MediaGridItemProps) {
+function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, onEditImage, folders, onMoveToFolder }: MediaGridItemProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showActions, setShowActions] = useState(false)
   const [showFolderMenu, setShowFolderMenu] = useState(false)
@@ -335,14 +338,13 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
         backgroundColor: colors.cardBg,
         border: `1px solid ${colors.border}`,
       }}
-      // TEMPORARILY DISABLED FOR TESTING
-      // onClick={(e) => {
-      //   const target = e.target as HTMLElement
-      //   if (target.closest('button')) {
-      //     return
-      //   }
-      //   onSelect()
-      // }}
+      onClick={(e) => {
+        const target = e.target as HTMLElement
+        if (target.closest('button') || target.closest('a')) {
+          return
+        }
+        onSelect()
+      }}
       onMouseEnter={() => {
         // Clear any pending leave timer
         if (leaveTimerRef.current) {
@@ -448,12 +450,12 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
           display: 'flex',
           gap: '8px',
           zIndex: 9999,
+          pointerEvents: 'auto',
         }}
       >
         <button
           type="button"
           onClick={(e) => {
-            alert('Copy button clicked!')
             e.stopPropagation()
             onCopyUrl()
           }}
@@ -466,6 +468,7 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
             color: colors.textPrimary,
             border: `1px solid ${colors.border}`,
             cursor: 'pointer',
+            pointerEvents: 'auto',
           }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -477,9 +480,45 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
         </button>
         <button
           type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (confirm(`Delete "${item.filename}"? This action cannot be undone.`)) {
+              onDelete()
+            }
+          }}
+          style={{
+            padding: '8px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            transition: 'all 0.2s ease',
+            backgroundColor: colors.cardBg,
+            color: colors.textPrimary,
+            border: `1px solid ${colors.border}`,
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)'
+            e.currentTarget.style.backgroundColor = colors.error
+            e.currentTarget.style.borderColor = colors.error
+            e.currentTarget.style.color = colors.white
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)'
+            e.currentTarget.style.backgroundColor = colors.cardBg
+            e.currentTarget.style.borderColor = colors.border
+            e.currentTarget.style.color = colors.textPrimary
+          }}
+          title="Delete"
+        >
+          <svg style={{ width: '20px', height: '20px', pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+        <button
+          type="button"
           ref={moreButtonRef}
           onClick={(e) => {
-            alert('3-dot menu clicked!')
             e.stopPropagation()
             setShowActions(prev => !prev)
             setShowFolderMenu(false)
@@ -493,6 +532,7 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
             color: colors.textPrimary,
             border: `1px solid ${colors.border}`,
             cursor: 'pointer',
+            pointerEvents: 'auto',
           }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -512,7 +552,7 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 10000,
+              zIndex: 1000000,
             }}
             onClick={(e) => {
               e.stopPropagation()
@@ -527,7 +567,7 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
               border: `1px solid ${colors.border}`,
               padding: '8px 0',
-              zIndex: 10001,
+              zIndex: 1000001,
               backgroundColor: colors.cardBg,
               top: dropdownPosition.top,
               left: dropdownPosition.left,
@@ -667,6 +707,39 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, folder
             </div>
 
             <div style={{ borderTop: `1px solid ${colors.border}`, margin: '4px 0' }} />
+
+            {/* Edit Image - Only for images */}
+            {isImage && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowActions(false)
+                  setShowFolderMenu(false)
+                  onEditImage()
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  width: '100%',
+                  transition: 'background-color 0.2s ease',
+                  color: colors.textPrimary,
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hoverBg}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <svg style={{ width: '20px', height: '20px', color: colors.accent, pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Image
+              </button>
+            )}
 
             <a
               href={item.publicUrl || item.url}
