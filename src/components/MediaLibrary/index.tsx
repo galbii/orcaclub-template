@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@payloadcms/ui'
 import { MediaGrid } from './MediaGrid'
 import { DropzoneUploader } from './DropzoneUploader'
@@ -325,9 +326,12 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                     }}
                   >
                     {selectedMedia.mimeType?.startsWith('image/') && getMediaUrl(selectedMedia) && (
-                      <img
+                      <Image
+                        unoptimized
                         src={getMediaUrl(selectedMedia)!}
                         alt={selectedMedia.alt || selectedMedia.filename || 'Media'}
+                        width={48}
+                        height={48}
                         style={{
                           width: '48px',
                           height: '48px',

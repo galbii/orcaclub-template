@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import NextImage from 'next/image'
 
 // Explicit color constants to avoid Payload theme conflicts
 const colors = {
@@ -512,11 +513,14 @@ export function ImageEditor({ file, onSave, onCancel }: ImageEditorProps) {
               onMouseLeave={handleMouseUp}
             >
               {/* Image */}
-              <img
+              <NextImage
+                unoptimized
                 ref={imageRef}
                 src={imageUrl}
                 alt="Preview"
                 onLoad={handleImageLoad}
+                width={displayDimensions.width}
+                height={displayDimensions.height}
                 style={{
                   display: 'block',
                   borderRadius: '8px',

@@ -92,16 +92,16 @@ export const mediaArrayField = (
     maxRows?: number
     admin?: {
       description?: string
-      condition?: (data: any, siblingData: any) => boolean
+      condition?: (data: unknown, siblingData: unknown) => boolean
     }
-    filterOptions?: Record<string, any>
+    filterOptions?: UploadField['filterOptions']
   },
 ): {
   name: string
   type: 'array'
   minRows?: number
   maxRows?: number
-  admin?: any
+  admin?: { description?: string; condition?: (data: unknown, siblingData: unknown) => boolean }
   fields: UploadField[]
 } => {
   const arrayField: {
@@ -109,7 +109,7 @@ export const mediaArrayField = (
     type: 'array'
     minRows?: number
     maxRows?: number
-    admin?: any
+    admin?: { description?: string; condition?: (data: unknown, siblingData: unknown) => boolean }
     fields: UploadField[]
   } = {
     name,

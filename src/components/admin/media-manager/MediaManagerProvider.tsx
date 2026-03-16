@@ -11,6 +11,7 @@ import type {
   FolderApiResponse,
 } from './types'
 import type { ToastMessage } from './Toast'
+import type { MediaMetadata } from './MediaUploadMetadataForm'
 
 interface ExtendedState extends MediaManagerState {
   toasts: ToastMessage[]
@@ -64,7 +65,7 @@ interface ExtendedContextValue extends MediaManagerContextValue {
   editMediaImage: (media: MediaItem) => Promise<void>
   handleFilesSelected: (files: FileList | File[]) => void
   moveToMetadataEditing: (file: File) => void
-  uploadWithMetadata: (file: File, metadata: any) => void
+  uploadWithMetadata: (file: File, metadata: MediaMetadata) => void
   uploadEditedFile: (file: File) => Promise<void>
   skipEditing: () => void
 }
@@ -152,30 +153,54 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
   }, [])
 
   // Transform API response to MediaItem format
-  const transformMedia = useCallback((doc: any): MediaItem => ({
-    id: doc.id,
-    filename: doc.filename || '',
-    alt: doc.alt || '',
-    url: doc.url || '',
-    publicUrl: doc.publicUrl || null,
-    mimeType: doc.mimeType || '',
-    filesize: doc.filesize || 0,
-    width: doc.width,
-    height: doc.height,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-    folder: doc.folder,
-    sizes: doc.sizes,
-    // Extended fields
-    caption: doc.caption,
-    description: doc.description,
-    mediaType: doc.mediaType,
-    tags: doc.tags,
-    featured: doc.featured,
-    // Nested group fields
-    videoMeta: doc.videoMeta,
-    seoMeta: doc.seoMeta,
-  }), [])
+  const transformMedia = useCallback((doc: Record<string, unknown>): MediaItem => {
+    const d = doc as {
+      id: string
+      filename?: string | null
+      alt?: string | null
+      url?: string | null
+      publicUrl?: string | null
+      mimeType?: string | null
+      filesize?: number | null
+      width?: number | null
+      height?: number | null
+      createdAt: string
+      updatedAt: string
+      folder?: string | FolderItem | null
+      sizes?: MediaItem['sizes']
+      caption?: string | null
+      description?: string | null
+      mediaType?: 'image' | 'video' | 'audio' | 'document' | null
+      tags?: string[] | null
+      featured?: boolean | null
+      videoMeta?: MediaItem['videoMeta']
+      seoMeta?: MediaItem['seoMeta']
+    }
+    return {
+      id: d.id,
+      filename: d.filename || '',
+      alt: d.alt || '',
+      url: d.url || '',
+      publicUrl: d.publicUrl || null,
+      mimeType: d.mimeType || '',
+      filesize: d.filesize || 0,
+      width: d.width ?? undefined,
+      height: d.height ?? undefined,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+      folder: d.folder,
+      sizes: d.sizes,
+      // Extended fields
+      caption: d.caption ?? undefined,
+      description: d.description ?? undefined,
+      mediaType: d.mediaType ?? undefined,
+      tags: d.tags ?? undefined,
+      featured: d.featured ?? undefined,
+      // Nested group fields
+      videoMeta: d.videoMeta,
+      seoMeta: d.seoMeta,
+    }
+  }, [])
 
   // Fetch folders
   const fetchFolders = useCallback(async () => {
@@ -300,6 +325,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       console.error('Failed to move media:', error)
       showToast('error', 'Failed to move media')
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showToast, state.currentPage])
 
   // Fetch media from API
@@ -335,7 +361,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
       setState(prev => ({
         ...prev,
-        media: data.docs.map(transformMedia),
+        media: (data.docs as unknown as Record<string, unknown>[]).map(transformMedia),
         currentPage: data.page,
         totalPages: data.totalPages,
         totalDocs: data.totalDocs,
@@ -387,7 +413,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         .replace(/\b\w/g, c => c.toUpperCase())
 
       // Include folder if uploading to a specific folder
-      const payload: Record<string, any> = { alt: altText }
+      const payload: Record<string, unknown> = { alt: altText }
       if (state.currentFolder) {
         payload.folder = state.currentFolder.id
       }
@@ -517,7 +543,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         .replace(/\b\w/g, c => c.toUpperCase())
 
       // Include folder if uploading to a specific folder
-      const payload: Record<string, any> = { alt: altText }
+      const payload: Record<string, unknown> = { alt: altText }
       if (state.currentFolder && !isUpdating) {
         payload.folder = state.currentFolder.id
       }
@@ -601,7 +627,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
   }, [])
 
   // Upload file with metadata
-  const uploadWithMetadata = useCallback(async (file: File, metadata: any) => {
+  const uploadWithMetadata = useCallback(async (file: File, metadata: MediaMetadata) => {
     // Check authentication first
     try {
       const authCheck = await fetch('/api/users/me', { credentials: 'include' })
@@ -631,7 +657,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       formData.append('file', file)
 
       // Build payload with provided metadata
-      const payload: Record<string, any> = {
+      const payload: Record<string, unknown> = {
         alt: metadata.alt,
         mediaType: metadata.mediaType,
         featured: metadata.featured,
@@ -781,7 +807,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         selectedMedia: prev.selectedMedia?.id === id ? null : prev.selectedMedia,
       }))
       showToast('success', 'Media deleted')
-    } catch (error) {
+    } catch (_error) {
       showToast('error', 'Failed to delete media')
     }
   }, [showToast])
@@ -812,7 +838,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
       showToast('success', 'Media updated')
       return updatedItem
-    } catch (error) {
+    } catch (_error) {
       showToast('error', 'Failed to update media')
       return null
     }
@@ -832,7 +858,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       console.log('[MediaManagerProvider] ========== State Update Complete ==========')
       return newState
     })
-  }, [])
+  }, [state.isOpen])
 
   const closeModal = useCallback(() => {
     setState(prev => ({
@@ -862,7 +888,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     try {
       await navigator.clipboard.writeText(url)
       showToast('success', 'URL copied to clipboard')
-    } catch (error) {
+    } catch (_error) {
       // Fallback for older browsers
       const textArea = document.createElement('textarea')
       textArea.value = url
@@ -873,7 +899,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       try {
         document.execCommand('copy')
         showToast('success', 'URL copied to clipboard')
-      } catch (e) {
+      } catch (_e) {
         showToast('error', 'Failed to copy URL')
       }
       document.body.removeChild(textArea)

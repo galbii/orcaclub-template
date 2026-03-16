@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { usePayloadAPI } from '@payloadcms/ui'
 import type { Media } from '@/payload-types'
 
@@ -431,14 +432,17 @@ export const MediaGrid: React.FC<MediaGridProps> = ({ onSelect, selectedId }) =>
                     handleSelect(media)
                   }
                 }}
-                aria-selected={isSelected}
+                aria-pressed={isSelected}
                 aria-label={`Select ${media.filename || 'media'}`}
               >
                 <div style={styles.thumbnailContainer}>
                   {thumbnailUrl ? (
-                    <img
+                    <Image
+                      unoptimized
                       src={thumbnailUrl}
                       alt={media.alt || media.filename || 'Media thumbnail'}
+                      width={150}
+                      height={150}
                       style={styles.thumbnail}
                       loading="lazy"
                     />

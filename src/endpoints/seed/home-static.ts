@@ -1,11 +1,11 @@
 import type { RequiredDataFromCollectionSlug } from 'payload'
 
-// Used for pre-seeded content so that the homepage is not empty
+// OrcaClub — static fallback for the homepage before CMS content is seeded
 export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
   slug: 'home',
   _status: 'published',
   hero: {
-    type: 'lowImpact',
+    type: 'highImpact',
     richText: {
       root: {
         type: 'root',
@@ -19,7 +19,7 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
                 format: 0,
                 mode: 'normal',
                 style: '',
-                text: 'Payload Website Template',
+                text: 'OrcaClub',
                 version: 1,
               },
             ],
@@ -33,35 +33,12 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
             type: 'paragraph',
             children: [
               {
-                type: 'link',
-                children: [
-                  {
-                    type: 'text',
-                    detail: 0,
-                    format: 0,
-                    mode: 'normal',
-                    style: '',
-                    text: 'Visit the admin dashboard',
-                    version: 1,
-                  },
-                ],
-                direction: 'ltr',
-                fields: {
-                  linkType: 'custom',
-                  newTab: false,
-                  url: '/admin',
-                },
-                format: '',
-                indent: 0,
-                version: 2,
-              },
-              {
                 type: 'text',
                 detail: 0,
                 format: 0,
                 mode: 'normal',
                 style: '',
-                text: ' to make your account and seed content for your website.',
+                text: 'The premium membership for builders who move fast.',
                 version: 1,
               },
             ],
@@ -78,10 +55,30 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
         version: 1,
       },
     },
+    links: [
+      {
+        link: {
+          type: 'custom',
+          label: 'Join the Club',
+          url: '/join',
+          newTab: false,
+          appearance: 'default',
+        },
+      },
+      {
+        link: {
+          type: 'custom',
+          label: 'Learn More',
+          url: '/about',
+          newTab: false,
+          appearance: 'outline',
+        },
+      },
+    ],
   },
   meta: {
-    description: 'An open-source website built with Payload and Next.js.',
-    title: 'Payload Website Template',
+    description: 'OrcaClub — the premium membership community for builders who move fast.',
+    title: 'OrcaClub',
   },
   title: 'Home',
   layout: [],

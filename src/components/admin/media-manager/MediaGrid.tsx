@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { createPortal } from 'react-dom'
 import { useMediaManager } from './MediaManagerProvider'
 import type { MediaItem, FolderItem } from './types'
@@ -369,9 +370,12 @@ function MediaGridItem({ item, isSelected, onSelect, onCopyUrl, onDelete, onEdit
         backgroundColor: colors.inputBg
       }}>
         {isImage ? (
-          <img
+          <Image
+            unoptimized
             src={thumbnailUrl}
             alt={item.alt || item.filename}
+            width={200}
+            height={150}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             loading="lazy"
           />

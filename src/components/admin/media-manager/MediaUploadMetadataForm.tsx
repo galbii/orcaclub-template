@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import Image from 'next/image'
 
 // Explicit color constants to avoid Payload theme conflicts
 const colors = {
@@ -229,9 +230,12 @@ export function MediaUploadMetadataForm({ file, onUpload, onCancel }: MediaUploa
                   backgroundColor: colors.slate100,
                 }}
               >
-                <img
+                <Image
+                  unoptimized
                   src={previewUrl}
                   alt="Preview"
+                  width={800}
+                  height={450}
                   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 />
               </div>
@@ -320,7 +324,7 @@ export function MediaUploadMetadataForm({ file, onUpload, onCancel }: MediaUploa
               </label>
               <select
                 value={mediaType}
-                onChange={(e) => setMediaType(e.target.value as any)}
+                onChange={(e) => setMediaType(e.target.value as 'image' | 'video' | 'audio' | 'document')}
                 style={{
                   width: '100%',
                   padding: '0.625rem 1rem',

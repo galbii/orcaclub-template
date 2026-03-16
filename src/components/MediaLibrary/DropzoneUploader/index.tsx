@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useState } from 'react'
+import Image from 'next/image'
 import { useDropzone } from 'react-dropzone'
 import { Button } from '@payloadcms/ui'
 import type { Media } from '@/payload-types'
@@ -319,9 +320,12 @@ export function DropzoneUploader({
                 {/* Preview */}
                 <div style={styles.filePreview}>
                   {previewUrl ? (
-                    <img
+                    <Image
+                      unoptimized
                       src={previewUrl}
                       alt={uploadingFile.file.name}
+                      width={48}
+                      height={48}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--border-radius-s)' }}
                       onLoad={() => URL.revokeObjectURL(previewUrl)}
                     />

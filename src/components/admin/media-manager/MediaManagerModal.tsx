@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState, useRef, useEffect, type DragEvent } from 'react'
+import Image from 'next/image'
 import { useMediaManager } from './MediaManagerProvider'
 import { MediaGrid } from './MediaGrid'
 import { FolderTree } from './FolderTree'
@@ -675,9 +676,12 @@ export function MediaManagerModal() {
                           boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)',
                         }}
                       >
-                        <img
-                          src={selectedMedia.sizes?.thumbnail?.url || selectedMedia.publicUrl || selectedMedia.url}
+                        <Image
+                          unoptimized
+                          src={selectedMedia.sizes?.thumbnail?.url || selectedMedia.publicUrl || selectedMedia.url || ''}
                           alt={selectedMedia.alt}
+                          width={80}
+                          height={80}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>

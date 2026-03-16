@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { useMediaManager } from './MediaManagerProvider'
 import type { MediaItem } from './types'
 
@@ -260,9 +261,12 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
                 backgroundColor: colors.cardBg,
               }}
             >
-              <img
-                src={media.sizes?.card?.url || media.publicUrl || media.url}
+              <Image
+                unoptimized
+                src={media.sizes?.card?.url || media.publicUrl || media.url || ''}
                 alt={media.alt}
+                width={800}
+                height={450}
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             </div>
@@ -375,7 +379,7 @@ export function MediaEditPanel({ media, onClose }: MediaEditPanelProps) {
             </label>
             <select
               value={mediaType}
-              onChange={(e) => setMediaType(e.target.value as any)}
+              onChange={(e) => setMediaType(e.target.value as 'image' | 'video' | 'audio' | 'document')}
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
