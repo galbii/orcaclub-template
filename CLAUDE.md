@@ -1,6 +1,6 @@
 # ORCA-WEB Development Guide
 
-**Project Type:** Production-ready website builder and CMS platform built on Payload CMS v3.79.0
+**Project Type:** Production-ready website builder and CMS platform built on Payload CMS v3 + Next.js 15
 
 This guide focuses on project-specific patterns, critical security rules, and organization principles. For general Payload CMS documentation, query the official docs or use context7.
 
@@ -15,6 +15,8 @@ bun run build                # Production build + type generation (REQUIRED befo
 bun run lint                 # ESLint + TypeScript checks
 bun run generate:types       # Generate Payload types after schema changes
 bun run generate:importmap   # Regenerate import map after component changes
+bun outdated                 # List packages with available updates
+bun update                   # Update all packages within semver range
 ```
 
 ### Critical Rules
@@ -1086,7 +1088,7 @@ bun run generate:importmap
 
 ## Project-Specific Gotchas
 
-1. **Bun Only** - npm causes dependency conflicts, always use bun
+1. **Bun Only** - npm causes dependency conflicts, always use bun; all scripts now use bun internally
 2. **Import Map** - Regenerate after adding/modifying admin components
 3. **Field Utilities** - Never use raw upload fields, always use utilities from `@/lib/payload/fields/media`
 4. **Type Generation** - Types auto-generate on build, run manually after schema changes
@@ -1094,6 +1096,380 @@ bun run generate:importmap
 6. **Transaction Safety** - Always pass `req` in hooks
 7. **Strict TypeScript** - All nullable types must be explicitly handled
 8. **AdminRootProvider** - Required for Media Manager to work globally
+9. **Motion components are Client Components** - Add `'use client'` to any file using `motion` from `motion/react`
+10. **tailwind-merge v2** - Current version doesn't know all Tailwind v4 classes; upgrade to v3 when running into merge issues with new v4 utilities
+
+---
+
+## Frontend Design System
+
+### Growing the UI Component Library
+
+The current `src/components/ui/` has 8 primitives (Button, Card, Input, Textarea, Label, Checkbox, Select, Pagination). When you need more, follow these rules:
+
+**When to add a new UI primitive:**
+- It has no business logic — purely presentational, driven by props
+- It's needed in 2+ places OR it's a standard interaction pattern (modal, tooltip, dropdown)
+
+**How to add one — follow the existing CVA pattern:**
+```typescript
+// src/components/ui/badge.tsx — example of a new primitive
+import { cn } from '@/utilities/ui'
+import { type VariantProps, cva } from 'class-variance-authority'
+
+const badgeVariants = cva(
+  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground',
+        secondary: 'bg-secondary text-secondary-foreground',
+        outline: 'border border-border text-foreground',
+        destructive: 'bg-destructive text-destructive-foreground',
+      },
+    },
+    defaultVariants: { variant: 'default' },
+  },
+)
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+export function Badge({ className, variant, ...props }: BadgeProps) {
+  return <div className={cn(badgeVariants({ variant }), className)} {...props} />
+}
+```
+
+**Primitives to add when needed (in priority order):**
+
+| Primitive | Package | Use case |
+|-----------|---------|----------|
+| Dialog / Modal | `@radix-ui/react-dialog` | Confirmations, forms, overlays |
+| Tooltip | `@radix-ui/react-tooltip` | Icon labels, help text |
+| Dropdown Menu | `@radix-ui/react-dropdown-menu` | Context menus, action menus |
+| Sheet | `@radix-ui/react-dialog` | Side panels, mobile nav drawers |
+| Tabs | `@radix-ui/react-tabs` | Content switching |
+| Toast / Sonner | `sonner` | Notifications, feedback |
+| Badge | (no dep) | Status labels, tags |
+| Avatar | `@radix-ui/react-avatar` | User profiles |
+| Skeleton | (no dep) | Loading placeholders |
+
+**Component conventions:**
+- Every primitive exports its variants function (`buttonVariants`, `badgeVariants`) so consuming components can compose them
+- Always accept `className` prop — pass it through `cn()` last so callers can override
+- Use `asChild` + Radix `Slot` for polymorphic elements (link-as-button etc.)
+- Export from `src/components/ui/index.ts` barrel after adding
+
+---
+
+## Animation & Motion
+
+### When to use what
+
+| Use case | Approach |
+|----------|----------|
+| Simple hover/focus state changes | CSS via Tailwind (`transition-colors`, `hover:scale-105`) |
+| Conditional visibility toggle | Tailwind + CSS transitions |
+| Page transitions, complex sequences | `motion` library |
+| Scroll-triggered reveals | `motion` with `whileInView` |
+| Staggered list animations | `motion` + `AnimatePresence` |
+
+### Installing motion
+
+```bash
+bun add motion
+```
+
+### Core motion patterns
+
+```tsx
+'use client'
+import { motion, AnimatePresence } from 'motion/react'
+
+// Fade in on mount
+<motion.div
+  initial={{ opacity: 0, y: 16 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.4, ease: 'easeOut' }}
+>
+  {children}
+</motion.div>
+
+// Scroll-triggered reveal
+<motion.section
+  initial={{ opacity: 0, y: 32 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, margin: '-64px' }}
+  transition={{ duration: 0.5 }}
+>
+  {content}
+</motion.section>
+
+// Staggered list
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+}
+const item = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0 },
+}
+
+<motion.ul variants={container} initial="hidden" animate="show">
+  {items.map((i) => (
+    <motion.li key={i.id} variants={item}>{i.name}</motion.li>
+  ))}
+</motion.ul>
+
+// Micro-interactions on interactive elements
+<motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+  Click me
+</motion.button>
+
+// Exit animations — wrap list/conditional with AnimatePresence
+<AnimatePresence>
+  {isOpen && (
+    <motion.div
+      key="modal"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {modal}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+**Rules:**
+- Motion components must be Client Components — add `'use client'` to the file
+- `viewport={{ once: true }}` on scroll animations — don't re-trigger on scroll-back
+- Keep durations short: 200–400ms for micro-interactions, 400–600ms for page-level transitions
+- Prefer `ease: 'easeOut'` — feels snappy on enter, natural on exit
+- Never animate `width`/`height` directly — use `scaleX`/`scaleY` or `maxHeight` for performance
+
+---
+
+## Accessibility Baseline
+
+Every component must meet these minimums. Not optional.
+
+### Semantic HTML first
+
+```tsx
+// ❌ WRONG — div soup
+<div onClick={handleClick} className="button">Submit</div>
+
+// ✅ CORRECT — native semantics for free
+<button onClick={handleClick}>Submit</button>
+<nav aria-label="Main navigation">...</nav>
+<main>...</main>
+<section aria-labelledby="section-heading">
+  <h2 id="section-heading">Title</h2>
+</section>
+```
+
+### Interactive elements
+
+Every interactive element needs:
+1. Keyboard operability (native `<button>`, `<a href>`, or `tabIndex={0}` + `onKeyDown`)
+2. Visible focus state (the existing `focus-visible:ring-2` pattern in button.tsx)
+3. Meaningful label (`aria-label` or visible text)
+
+```tsx
+// Icon-only button — needs aria-label
+<button aria-label="Close dialog">
+  <X className="h-4 w-4" aria-hidden="true" />
+</button>
+
+// Screen-reader-only text
+<span className="sr-only">Loading...</span>
+```
+
+### Color contrast
+
+Use semantic token classes — they're designed for contrast:
+- `text-foreground` on `bg-background` ✅
+- `text-primary-foreground` on `bg-primary` ✅
+- Never rely on color alone to convey meaning — pair with icon or text
+
+### Focus management
+
+```tsx
+// Dialogs/modals: trap focus inside while open (Radix Dialog does this automatically)
+// After close: return focus to the trigger element
+// After navigation: scroll to top or focus main content
+
+// Use Radix primitives — they handle focus management correctly by default
+import * as Dialog from '@radix-ui/react-dialog'
+```
+
+### ARIA landmarks
+
+```tsx
+// Page structure
+<header>       // role="banner" implicit
+<nav>          // role="navigation" implicit — add aria-label if multiple navs
+<main>         // role="main" implicit — one per page
+<footer>       // role="contentinfo" implicit
+<aside>        // role="complementary" implicit
+```
+
+---
+
+## Performance Patterns
+
+### Images
+
+Always use `next/image` via the existing Media components — never raw `<img>`:
+
+```tsx
+// ✅ Use existing Media component
+import { Media } from '@/components/Media'
+<Media resource={post.featuredImage} />
+
+// ✅ Or next/image directly with explicit dimensions
+import Image from 'next/image'
+<Image src={url} alt={alt} width={1200} height={800} />
+
+// ❌ Never use raw <img> — no optimization, no lazy loading
+<img src={url} alt={alt} />
+```
+
+### Code splitting
+
+Heavy components that aren't needed on initial render:
+
+```tsx
+import dynamic from 'next/dynamic'
+
+// ssr: false for browser-only components (charts, editors, map)
+const Chart = dynamic(() => import('@/components/Chart'), { ssr: false })
+
+// With loading state
+const HeavyEditor = dynamic(() => import('@/components/Editor'), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-muted animate-pulse rounded" />,
+})
+```
+
+### Suspense + skeleton loading
+
+```tsx
+import { Suspense } from 'react'
+
+// Server component with async data
+async function PostList() {
+  const posts = await fetchPosts()
+  return <>{posts.map(p => <PostCard key={p.id} post={p} />)}</>
+}
+
+// Wrap with Suspense at the page level
+export default function Page() {
+  return (
+    <Suspense fallback={<PostListSkeleton />}>
+      <PostList />
+    </Suspense>
+  )
+}
+
+// Skeleton: match the shape of the loaded content
+function PostListSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="h-48 bg-muted animate-pulse rounded-lg" />
+      ))}
+    </div>
+  )
+}
+```
+
+### Server vs Client component discipline
+
+```tsx
+// ❌ Don't add 'use client' just because a child needs it — extract the interactive part
+'use client'
+export default function BlogPage() {   // entire page becomes client bundle
+  const [open, setOpen] = useState(false)
+  return <>{/* all the server-rendered content is now client-side */}</>
+}
+
+// ✅ Keep the page as a Server Component, extract only what needs state
+// page.tsx (Server Component)
+import { ShareButton } from './_components/ShareButton'
+export default async function BlogPage() {
+  const post = await fetchPost()
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <ShareButton url={post.url} />   {/* only this is a Client Component */}
+    </article>
+  )
+}
+```
+
+---
+
+## Package Management
+
+### Checking for updates
+
+```bash
+bun outdated          # list all outdated packages with current/update/latest
+bun update            # update all packages within their semver range (safe)
+```
+
+### Current package update status (as of May 2026)
+
+**Safe to update now** (within semver range, run `bun update`):
+- `tailwindcss` 4.2.1 → 4.3.0
+- `@tailwindcss/postcss` 4.2.1 → 4.3.0
+- `postcss` 8.5.8 → 8.5.14
+- `prettier` 3.8.1 → 3.8.3
+- `graphql` 16.13.1 → 16.14.0
+- `react` / `react-dom` 19.2.4 → 19.2.6
+- `react-hook-form` 7.71.2 → 7.75.0
+
+**Major version bumps — research before upgrading:**
+
+| Package | Current | Latest | Notes |
+|---------|---------|--------|-------|
+| `payload` + `@payloadcms/*` | 3.79.0 | 3.84.1 | Pinned exact — update together, use context7 for changelog |
+| `lucide-react` | 0.378.0 | 1.14.0 | Icon names may have changed |
+| `tailwind-merge` | 2.6.1 | 3.6.0 | v3 adds full Tailwind v4 class support — upgrade when ready |
+| `next` | 15.4.10 | 16.2.6 | Major — check Next.js migration guide |
+| `typescript` | 5.9.3 | 6.0.3 | Major — verify strict mode still passes |
+| `eslint` | 9.39.4 | 10.3.0 | Flat config changes |
+| `vitest` | 3.2.3 | 4.1.5 | Major |
+| `dotenv` | 16.4.7 | 17.4.2 | Major |
+
+### Upgrading a major version safely
+
+```bash
+# 1. Research: use context7 to check migration docs
+# 2. Update the specific package
+bun add package@latest
+
+# 3. Immediately verify
+bun run build
+
+# 4. Check types
+bun run lint
+
+# 5. If something broke, pin back
+bun add package@<previous-version>
+```
+
+### Adding new packages
+
+```bash
+bun add <package>           # production dependency
+bun add -d <package>        # dev dependency
+bun add motion              # example: animation library
+bun add @radix-ui/react-dialog   # example: new UI primitive
+```
 
 ---
 
