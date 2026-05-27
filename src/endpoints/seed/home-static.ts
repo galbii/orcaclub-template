@@ -1,11 +1,12 @@
 import type { RequiredDataFromCollectionSlug } from 'payload'
 
-// OrcaClub — static fallback for the homepage before CMS content is seeded
+// Static fallback for the homepage before CMS content is seeded.
+// Replace by creating a page with slug "home" in /admin.
 export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
   slug: 'home',
   _status: 'published',
   hero: {
-    type: 'highImpact',
+    type: 'lowImpact',
     richText: {
       root: {
         type: 'root',
@@ -19,7 +20,7 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
                 format: 0,
                 mode: 'normal',
                 style: '',
-                text: 'OrcaClub',
+                text: 'Welcome to your new Payload site',
                 version: 1,
               },
             ],
@@ -38,7 +39,7 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
                 format: 0,
                 mode: 'normal',
                 style: '',
-                text: 'The premium membership for builders who move fast.',
+                text: "Sign in at /admin to create your first page. Get started by editing src/app/(frontend)/page.tsx or creating a page with slug 'home' in /admin.",
                 version: 1,
               },
             ],
@@ -55,30 +56,11 @@ export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
         version: 1,
       },
     },
-    links: [
-      {
-        link: {
-          type: 'custom',
-          label: 'Join the Club',
-          url: '/join',
-          newTab: false,
-          appearance: 'default',
-        },
-      },
-      {
-        link: {
-          type: 'custom',
-          label: 'Learn More',
-          url: '/about',
-          newTab: false,
-          appearance: 'outline',
-        },
-      },
-    ],
+    links: [],
   },
   meta: {
-    description: 'OrcaClub — the premium membership community for builders who move fast.',
-    title: 'OrcaClub',
+    description: 'A Payload CMS + Next.js starter template.',
+    title: 'Home',
   },
   title: 'Home',
   layout: [],

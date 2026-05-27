@@ -96,17 +96,6 @@ export function MediaManagerModal() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounterRef = useRef(0)
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🎨 [MODAL STATE]', {
-      isOpen,
-      editingFile: editingFile?.name,
-      metadataEditingFile: metadataEditingFile?.name,
-      editingMedia: editingMedia?.filename,
-      pendingFiles: pendingFiles.length,
-    })
-  }, [isOpen, editingFile, metadataEditingFile, editingMedia, pendingFiles])
-
   // Handle keyboard escape - only close modal, not editors
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -171,7 +160,6 @@ export function MediaManagerModal() {
 
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      console.log('📥 [DROP] Files dropped:', files.length)
       handleFilesSelected(files)
     }
   }, [handleFilesSelected])
@@ -180,7 +168,6 @@ export function MediaManagerModal() {
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
-      console.log('📥 [FILE INPUT] Files selected:', files.length)
       handleFilesSelected(files)
     }
     // Reset input so same file can be selected again
@@ -393,7 +380,6 @@ export function MediaManagerModal() {
                 {/* Upload Button */}
                 <button
                   onClick={() => {
-                    console.log('📤 [UPLOAD BUTTON] Clicked')
                     fileInputRef.current?.click()
                   }}
                   disabled={isUploading}
@@ -1054,16 +1040,13 @@ export function MediaManagerModal() {
           onSave={(editedFile) => {
             // If editing existing media, update it directly (skip metadata form)
             if (editingMediaId) {
-              console.log('✅ [IMAGE EDITOR] Updating existing media item:', editingMediaId)
               uploadEditedFile(editedFile)
             } else {
               // New upload - go through metadata form
-              console.log('✅ [IMAGE EDITOR] Save clicked, moving to metadata')
               moveToMetadataEditing(editedFile)
             }
           }}
           onCancel={() => {
-            console.log('❌ [IMAGE EDITOR] Cancel clicked')
             if (pendingFiles.length > 1) {
               skipEditing()
             } else {
@@ -1078,11 +1061,9 @@ export function MediaManagerModal() {
         <MediaUploadMetadataForm
           file={metadataEditingFile}
           onUpload={(metadata) => {
-            console.log('✅ [METADATA FORM] Upload clicked')
             uploadWithMetadata(metadataEditingFile, metadata)
           }}
           onCancel={() => {
-            console.log('❌ [METADATA FORM] Cancel clicked')
             if (pendingFiles.length > 1) {
               skipEditing()
             } else {

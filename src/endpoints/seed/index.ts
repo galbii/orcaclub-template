@@ -48,9 +48,8 @@ export const seed = async ({
     globals.map((global) =>
       payload.updateGlobal({
         slug: global,
-        data: {
-          navItems: [],
-        },
+        // navItems exists on header + footer; cast widens to the GlobalSlug union
+        data: { navItems: [] } as Parameters<typeof payload.updateGlobal>[0]['data'],
         depth: 0,
         context: {
           disableRevalidate: true,

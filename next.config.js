@@ -13,15 +13,17 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
+      NEXT_PUBLIC_SERVER_URL,
+      process.env.NEXT_PUBLIC_R2_PUBLIC_URL,
+    ]
+      .filter(Boolean)
+      .map((item) => {
         const url = new URL(item)
-
         return {
           hostname: url.hostname,
           protocol: url.protocol.replace(':', ''),
         }
       }),
-    ],
   },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {

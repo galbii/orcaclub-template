@@ -397,13 +397,6 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     setState(prev => ({ ...prev, isUploading: true, error: null }))
 
     const uploadPromises = files.map(async (file) => {
-      console.log('📤 [UPLOAD] Starting direct upload for:', {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-      })
-
       const formData = new FormData()
       formData.append('file', file)
 
@@ -418,17 +411,13 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         payload.folder = state.currentFolder.id
       }
 
-      console.log('📝 [UPLOAD] Payload data:', payload)
       formData.append('_payload', JSON.stringify(payload))
 
-      console.log('🌐 [UPLOAD] Sending request to /api/media')
       const response = await fetch('/api/media', {
         method: 'POST',
         credentials: 'include', // CRITICAL: Include auth cookies
         body: formData,
       })
-
-      console.log('📨 [UPLOAD] Response status:', response.status, response.statusText)
 
       if (!response.ok) {
         // Log the actual error response for debugging
@@ -451,11 +440,6 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
       }
 
       const result = await response.json()
-      console.log('✅ [UPLOAD] Upload successful:', {
-        id: result.doc?.id,
-        url: result.doc?.url,
-        sizes: result.doc?.sizes ? Object.keys(result.doc.sizes) : 'none',
-      })
 
       return result
     })
@@ -479,18 +463,14 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
   // Handle file selection - show editor for images
   const handleFilesSelected = useCallback((files: FileList | File[]) => {
-    console.log('🎯 [HANDLE FILES] Called with files:', files.length)
     const fileArray = Array.from(files)
 
     // Filter to get image files for editing
     const imageFiles = fileArray.filter(f => f.type.startsWith('image/'))
     const otherFiles = fileArray.filter(f => !f.type.startsWith('image/'))
 
-    console.log('🎯 [HANDLE FILES] Image files:', imageFiles.length, 'Other files:', otherFiles.length)
-
     // If there are non-image files, upload them directly
     if (otherFiles.length > 0) {
-      console.log('🎯 [HANDLE FILES] Uploading non-image files directly')
       uploadFilesDirectly(otherFiles)
     }
 
@@ -498,9 +478,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     if (imageFiles.length > 0) {
       const firstFile = imageFiles[0]
       if (firstFile) {
-        console.log('🎯 [HANDLE FILES] Setting editingFile to:', firstFile.name)
         setState(prev => {
-          console.log('🎯 [HANDLE FILES] Previous state - isOpen:', prev.isOpen, 'editingFile:', prev.editingFile?.name)
           return {
             ...prev,
             pendingFiles: imageFiles,
@@ -646,13 +624,6 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
     setState(prev => ({ ...prev, isUploading: true, metadataEditingFile: null }))
 
     try {
-      console.log('📤 [UPLOAD WITH METADATA] Starting upload for:', {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-      })
-
       const formData = new FormData()
       formData.append('file', file)
 
@@ -674,17 +645,13 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         payload.folder = state.currentFolder.id
       }
 
-      console.log('📝 [UPLOAD WITH METADATA] Payload data:', payload)
       formData.append('_payload', JSON.stringify(payload))
 
-      console.log('🌐 [UPLOAD WITH METADATA] Sending request to /api/media')
       const response = await fetch('/api/media', {
         method: 'POST',
         credentials: 'include',
         body: formData,
       })
-
-      console.log('📨 [UPLOAD WITH METADATA] Response status:', response.status, response.statusText)
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -703,13 +670,7 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
         throw new Error(userMessage)
       }
 
-      const result = await response.json()
-      console.log('✅ [UPLOAD WITH METADATA] Upload successful:', {
-        id: result.doc?.id,
-        url: result.doc?.url,
-        publicUrl: result.doc?.publicUrl,
-        sizes: result.doc?.sizes ? Object.keys(result.doc.sizes) : 'none',
-      })
+      await response.json()
 
       // Move to next file in queue or close
       setState(prev => {
@@ -846,19 +807,11 @@ export function MediaManagerProvider({ children }: MediaManagerProviderProps) {
 
   // Modal controls
   const openModal = useCallback((options?: import('./types').MediaManagerModalOptions) => {
-    console.log('[MediaManagerProvider] ========== openModal CALLED ==========')
-    console.log('[MediaManagerProvider] Options:', options)
-    console.log('[MediaManagerProvider] Current state.isOpen:', state.isOpen)
-
     setState(prev => {
-      console.log('[MediaManagerProvider] setState callback executing')
-      console.log('[MediaManagerProvider] Previous isOpen:', prev.isOpen)
       const newState = { ...prev, isOpen: true, modalOptions: options || null }
-      console.log('[MediaManagerProvider] New isOpen:', newState.isOpen)
-      console.log('[MediaManagerProvider] ========== State Update Complete ==========')
       return newState
     })
-  }, [state.isOpen])
+  }, [])
 
   const closeModal = useCallback(() => {
     setState(prev => ({

@@ -31,19 +31,16 @@ import type { Media } from '@/payload-types'
  */
 export const MediaSelectorButton: React.FC = () => {
   const { value, setValue } = useField<string | Media>({ path: '' })
-  const { openModal, isOpen } = useMediaManager()
+  const { openModal } = useMediaManager()
 
   const handleOpenLibrary = () => {
-    console.log('[MediaSelectorButton] Opening modal in select mode')
     openModal({
       mode: 'select',
       onSelect: (media) => {
-        console.log('[MediaSelectorButton] Media selected:', media.id)
         // Set the field value to the selected media ID
         setValue(media.id)
       },
     })
-    console.log('[MediaSelectorButton] Modal state after open:', isOpen)
   }
 
   return (

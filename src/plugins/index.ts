@@ -13,9 +13,11 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { env } from '@/lib/env'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
-  return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Site'
+  return doc?.title ? `${doc.title} | ${siteName}` : siteName
 }
 
 const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
@@ -24,28 +26,21 @@ const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
   return doc?.slug ? `${url}/${doc.slug}` : url
 }
 
-// Storage mode configuration
-// Set STORAGE_MODE=local in .env to use local filesystem storage
-// Set STORAGE_MODE=r2 in .env to use Cloudflare R2 storage
-const storageMode = process.env.STORAGE_MODE || 'local'
-const useR2Storage = storageMode === 'r2'
-
 export const plugins: Plugin[] = [
-  // Conditionally add R2 storage plugin if STORAGE_MODE=r2
-  ...(useR2Storage && process.env.R2_BUCKET
+  ...(env.R2
     ? [
         s3Storage({
           collections: {
-            media: true, // Enable R2 storage for Media collection
+            media: { disableLocalStorage: true },
           },
-          bucket: process.env.R2_BUCKET,
+          bucket: env.R2.bucket,
           config: {
             credentials: {
-              accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+              accessKeyId: env.R2.accessKeyId,
+              secretAccessKey: env.R2.secretAccessKey,
             },
             region: 'auto',
-            endpoint: process.env.R2_ENDPOINT,
+            endpoint: env.R2.endpoint,
           },
         }),
       ]

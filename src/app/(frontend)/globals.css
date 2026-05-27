@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=UnifrakturMaguntia&family=Cormorant+Garamond:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
 
@@ -8,19 +8,12 @@
 /* ── Dark mode via data-theme attribute ────────────────────── */
 @custom-variant dark (&:is([data-theme="dark"] *));
 
-/* ── OrcaClub theme tokens ─────────────────────────────────── */
+/* ── Theme tokens ──────────────────────────────────────────── */
 @theme {
   /* Fonts */
   --font-sans: var(--font-geist-sans), "Geist Sans", sans-serif;
   --font-mono: var(--font-geist-mono), "Geist Mono", monospace;
   --font-display: "Syne", var(--font-geist-sans), sans-serif;
-
-  /* OrcaClub brand colors — generates bg-orca-*, text-orca-*, border-orca-* utilities */
-  --color-orca-cyan: hsl(195 100% 50%);
-  --color-orca-green: hsl(160 100% 50%);
-  --color-orca-deep: hsl(220 40% 6%);
-  --color-orca-navy: hsl(220 35% 10%);
-  --color-orca-surface: hsl(220 30% 14%);
 
   /* Border radius */
   --radius: 0.375rem;
@@ -87,7 +80,7 @@
     font-weight: unset;
   }
 
-  /* OrcaClub — light mode */
+  /* Light mode */
   :root {
     --background: 210 30% 98%;
     --foreground: 215 40% 8%;
@@ -120,16 +113,9 @@
     --success: 165 80% 40%;
     --warning: 34 89% 55%;
     --error: 0 84% 55%;
-
-    /* OrcaClub brand tokens */
-    --orca-cyan: 195 100% 50%;
-    --orca-green: 160 100% 50%;
-    --orca-deep: 220 40% 6%;
-    --orca-navy: 220 35% 10%;
-    --orca-surface: 220 30% 14%;
   }
 
-  /* OrcaClub — dark mode (deep ocean) */
+  /* Dark mode */
   [data-theme='dark'] {
     --background: 220 40% 5%;
     --foreground: 200 30% 92%;

@@ -18,7 +18,7 @@
  */
 'use client'
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import { MediaManagerProvider } from './media-manager/MediaManagerProvider'
 import { MediaManagerModal } from './media-manager/MediaManagerModal'
 import { MediaManagerButton } from './media-manager/MediaManagerButton'
@@ -28,11 +28,6 @@ interface AdminRootProviderProps {
 }
 
 export const AdminRootProvider: React.FC<AdminRootProviderProps> = ({ children }) => {
-  // Debug: Log when provider mounts
-  useEffect(() => {
-    console.log('[AdminRootProvider] Provider mounted - Media Manager initialized')
-  }, [])
-
   return (
     <MediaManagerProvider>
       {children}
