@@ -8,6 +8,9 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Required by the Dockerfile — emits .next/standalone with a minimal
+  // server.js and only the node_modules actually reachable at runtime.
+  output: 'standalone',
   experimental: {
     optimizePackageImports: ['@/components/ui', '@/hooks', '@/utilities'],
   },

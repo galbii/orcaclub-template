@@ -16,7 +16,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 import { env } from '@/lib/env'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Site'
+  const siteName = env.SITE_NAME
   return doc?.title ? `${doc.title} | ${siteName}` : siteName
 }
 

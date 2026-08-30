@@ -1,71 +1,80 @@
-# To use this Dockerfile, you have to set `output: 'standalone'` in your next.config.js file.
-# From https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
+# Requires `output: 'standalone'` in next.config.js (already set).
+#
+# NEXT_PUBLIC_* vars are inlined by Next.js at BUILD time, not read at
+# runtime. Each one therefore needs an ARG here AND must be marked as a
+# "Build Variable" in Coolify — a runtime-only variable arrives too late
+# and the value compiles to an empty string with no error.
 
-FROM node:22.17.0-alpine AS base
+FROM oven/bun:1.3-alpine AS base
 
-# Install dependencies only when needed
+
+# ── deps ──────────────────────────────────────────────────────
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 
-# Rebuild the source code only when needed
+# ── builder ───────────────────────────────────────────────────
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED 1
+# Build-time public vars. Add a matching ARG+ENV pair for every new
+# NEXT_PUBLIC_* you introduce, or it will be empty in production.
+ARG NEXT_PUBLIC_SERVER_URL
+ARG NEXT_PUBLIC_SITE_NAME
+ARG NEXT_PUBLIC_GA_ID
+ARG NEXT_PUBLIC_GTM_ID
+ARG NEXT_PUBLIC_FB_PIXEL_ID
+ARG NEXT_PUBLIC_R2_PUBLIC_URL
 
-RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+ENV NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL
+ENV NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME
+ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
+ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
+ENV NEXT_PUBLIC_FB_PIXEL_ID=$NEXT_PUBLIC_FB_PIXEL_ID
+ENV NEXT_PUBLIC_R2_PUBLIC_URL=$NEXT_PUBLIC_R2_PUBLIC_URL
 
-# Production image, copy all the files and run next
+# The build boots Payload, which connects to MongoDB, so DATABASE_URL and
+# PAYLOAD_SECRET must be available as build variables too.
+ARG DATABASE_URL
+ARG PAYLOAD_SECRET
+ENV DATABASE_URL=$DATABASE_URL
+ENV PAYLOAD_SECRET=$PAYLOAD_SECRET
+
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN bun run build
+
+
+# ── runner ────────────────────────────────────────────────────
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
 
-# Remove this line if you do not have this folder
 COPY --from=builder /app/public ./public
 
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+RUN mkdir .next && chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
 EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-ENV PORT 3000
+# STORAGE_MODE=local writes uploads to /app/public/media, which lives
+# inside the container and is destroyed on every redeploy. Mount a
+# volume there, or use STORAGE_MODE=r2.
 
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD HOSTNAME="0.0.0.0" node server.js
+CMD ["node", "server.js"]

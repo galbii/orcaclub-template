@@ -1,4 +1,5 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { resendAdapter } from '@payloadcms/email-resend'
 import sharp from 'sharp'
 import path from 'path'
 import { buildConfig, PayloadRequest } from 'payload'
@@ -13,6 +14,7 @@ import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { SiteSettings } from './SiteSettings/config'
 import { plugins } from './plugins'
+import { env } from '@/lib/env'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 
@@ -55,13 +57,25 @@ export default buildConfig({
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: mongooseAdapter({
-    url: process.env.DATABASE_URL || '',
+    url: env.DATABASE_URL,
   }),
   collections: [Pages, Posts, Media, Categories, Users],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, SiteSettings],
   plugins,
-  secret: process.env.PAYLOAD_SECRET,
+  secret: env.PAYLOAD_SECRET,
+  // Without RESEND_API_KEY, Payload's default transport logs emails to
+  // the console instead of sending them. That keeps local dev quiet and
+  // makes a missing key obvious rather than silently dropping mail.
+  ...(env.RESEND
+    ? {
+        email: resendAdapter({
+          defaultFromAddress: env.RESEND.fromAddress,
+          defaultFromName: env.RESEND.fromName,
+          apiKey: env.RESEND.apiKey,
+        }),
+      }
+    : {}),
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

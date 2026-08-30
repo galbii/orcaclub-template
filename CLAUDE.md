@@ -1,15 +1,21 @@
 # Payload Starter — AI Agent Guide
 
-Payload CMS v3.79.0 + Next.js 15 App Router + MongoDB + Bun + Tailwind v4. Goals: drop-in env vars, develop pages in `/admin` without code changes, layout-builder pattern for blocks/heros, local-or-R2 storage with no code switch.
+Payload CMS v3.88.0 + Next.js 15 App Router + MongoDB + Bun + Tailwind v4. Goals: drop-in env vars, develop pages in `/admin` without code changes, layout-builder pattern for blocks/heros, local-or-R2 storage with no code switch.
 
 ## Setup (~2 min)
 
 ```bash
 bun install
-bun run setup            # copies .env.example → .env.local, generates secrets
-docker compose up -d     # starts mongo:7 on 27017
+cp .env.example .env.local
+bun run setup            # generates the three secrets in .env.local
+# fill in the values marked "<-- FILL IN" in .env.local
+docker compose up -d     # optional: local mongo:7 on 27017
 bun dev                  # → http://localhost:3000/admin
 ```
+
+`.env.example` is the single source of truth for configuration. Every
+integration (Mongo, Resend, GA, GTM, Meta Pixel, R2, Shopify) is a commented,
+grouped block there — substitute values, nothing else to wire up.
 
 First run: create the admin user on the signup screen, then create a Page with slug `home`. Until that Page exists, the `homeStatic` fallback in `src/endpoints/seed/home-static.ts` renders.
 
@@ -19,10 +25,115 @@ First run: create the admin user on the signup screen, then create a Page with s
 |---------|-----|
 | `bun dev` | Dev server (turbopack) |
 | `bun run build` | Production build + type generation. MUST PASS before code is complete. |
-| `bun run lint` | ESLint + TypeScript check |
+| `bun run lint` | ESLint only — does NOT typecheck. Run `typecheck` separately. |
+| `bun run typecheck` | `tsc --noEmit` |
+| `bun run test:int` | Integration tests via `bun test` (no vitest — this repo is bun-only) |
 | `bun run generate:types` | Regenerate `src/payload-types.ts` after schema changes |
 | `bun run generate:importmap` | Regenerate after adding/changing admin components |
 | `bun run setup` | Generate secrets into `.env.local` (idempotent) |
+
+## Environment
+
+All config flows through `.env.local`, validated at boot by `src/lib/env.ts`.
+Import `env` / `analytics` from `@/lib/env` — never read `process.env` directly
+(except for `NEXT_PUBLIC_*` inside `src/lib/env.ts` itself, where Next's build-time
+string substitution requires full literal names).
+
+**Two things bite repeatedly:**
+
+1. **Atlas connection strings have no database name.** `env.ts` throws a specific
+   error if one is missing, because mongoose would otherwise silently use a db
+   called `test`.
+2. **`NEXT_PUBLIC_*` is inlined at BUILD time.** On Coolify each must be a *Build
+   Variable* and have a matching `ARG`+`ENV` pair in the `Dockerfile`. Adding a new
+   public var means editing the Dockerfile too, or it compiles to an empty string.
+
+### Analytics
+
+`src/components/Analytics/` mounts GTM, GA, and the Meta Pixel from
+`NEXT_PUBLIC_GTM_ID` / `NEXT_PUBLIC_GA_ID` / `NEXT_PUBLIC_FB_PIXEL_ID`. Each is
+inert when blank. GA is skipped when GTM is set, on the assumption GA is routed
+through the container.
+
+### Email
+
+`RESEND_API_KEY` activates the Resend adapter in `payload.config.ts`. Without it
+Payload logs mail to the console instead of sending — so contact-form
+notifications and admin password resets are no-ops locally by design.
+
+### Environment invariants
+
+1. **Import `env` / `analytics` / `shopify` from `@/lib/env`.** Never read
+   `process.env` in a component or collection. The one exception is inside
+   `src/lib/env.ts` itself, where `NEXT_PUBLIC_*` must be written as full
+   literals — Next substitutes them by static text match, so `process.env[key]`
+   would never be replaced.
+2. **Use `||`, never `??`, for optional vars.** An unfilled `.env.local` leaves a
+   var as an empty string, not `undefined`. `??` passes `""` straight through —
+   this already shipped a bug where every page title rendered as `"About | "`.
+3. **Never throw at module load for an optional integration.** A top-level
+   `if (!process.env.X) throw` breaks `next build` for anyone without that
+   credential. Construct lazily and export `null` when disabled.
+4. **Half-configured is an error.** If a feature's primary key is set but a
+   dependent value is missing, throw. Silent partial behavior is worse than a
+   clear failure.
+5. **Secrets never get a `NEXT_PUBLIC_` prefix.** That prefix means "compile this
+   into the browser bundle". `SHOPIFY_STOREFRONT_ACCESS_TOKEN` and every `R2_*`
+   secret are server-only and must stay that way.
+
+## Adding a New Integration
+
+Five places, every time. Miss step 3 and it works locally and is silently empty
+in production.
+
+1. **`.env.example`** — add a commented block: what it does, where to get the
+   value, what happens when blank.
+2. **`src/lib/env.ts`** — parse it. `optional()` for opt-in features,
+   `required()` only inside an enabled branch. Export `null` when off.
+3. **`Dockerfile`** — **only if the var is `NEXT_PUBLIC_*`**, add a matching
+   `ARG` *and* `ENV` pair in the builder stage. Skipping this is the #1
+   production bug in this template: the value compiles to an empty string with no
+   error anywhere. Server-only vars need nothing here.
+4. **Consume it** — gate the feature on the null check. Render nothing, or return
+   an empty result, when disabled.
+5. **`README.md`** — add a row to the integrations table.
+
+Verify with a blank-env build:
+
+```bash
+rm -rf .next && bun run build
+grep -rc "your-vendor-domain" .next/static   # expect 0
+```
+
+For anything carrying a secret, also confirm it is absent from the client
+bundle — build with a sentinel value and grep `.next/static` for it.
+
+## Commerce (Shopify)
+
+`src/lib/shopify/` wraps the **Storefront API** (never the Admin API — it holds
+destructive scopes). Server-only; every file starts with `import 'server-only'`.
+
+| File | Role |
+|------|------|
+| `client.ts` | The only place that calls `fetch`. Auth, caching, error shape. |
+| `queries.ts` | GraphQL documents and shared fragments. |
+| `raw.ts` | Shapes Shopify returns. Never import outside this folder. |
+| `normalize.ts` | Raw → flat `types.ts` shapes. One mapper per entity. |
+| `products.ts` / `cart.ts` | Public API. |
+| `index.ts` | Barrel — import from `@/lib/shopify`, not deep paths. |
+
+Rules when extending it:
+
+- Add a query to `queries.ts` and a typed wrapper — do not call `storefront()`
+  from a component.
+- Catalog reads must return empty results when `isShopifyEnabled()` is false, so
+  an unconfigured clone still builds.
+- Cart calls are always `cache: 'no-store'`.
+- Shopify returns mutation failures in `userErrors` with an HTTP **200**. Always
+  unwrap them, or a failed write looks like a success.
+- Never rebuild checkout. Redirect to the cart's `checkoutUrl`.
+- Routes reading the catalog need `revalidate` or `force-dynamic` — the
+  credentials are runtime-only, so a build-time prerender bakes in an empty page.
 
 ## Critical Rules
 
@@ -191,6 +302,11 @@ Files live in `public/media`, served by Next.js. Set `STORAGE_MODE=local` (or le
 ## Gotchas
 
 - Bun only — `npm`/`pnpm`/`yarn` will desync `bun.lock`.
+- **Transactions differ between local and prod.** The docker-compose mongo is
+  standalone, so Payload transactions are OFF locally; Atlas is a replica set, so
+  they are ON in production. A hook that forgets to pass `req` therefore looks
+  fine locally and can leave partial writes in prod. Test transactional hooks
+  against a replica set before shipping.
 - Strict TypeScript — handle nullables explicitly. No silent `as any`.
 - After schema changes: `bun run generate:types`. After admin component changes: `bun run generate:importmap`.
 - Home route IS CMS-driven. Create a Page with slug `home` in `/admin`. The `homeStatic` fallback only renders when no home page exists.
