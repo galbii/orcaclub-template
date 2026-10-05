@@ -16,6 +16,7 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "postbuild": "next-sitemap --config next-sitemap.config.cjs",
     "reinstall": "cross-env NODE_OPTIONS=--no-deprecation rm -rf node_modules && bun install",
+    "new-project": "bash scripts/new-project.sh",
     "setup": "cp -n .env.example .env.local; node scripts/gen-secrets.mjs",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "bun run test:int && bun run test:e2e",

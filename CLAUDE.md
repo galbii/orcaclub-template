@@ -2,6 +2,58 @@
 
 Payload CMS v3.88.0 + Next.js 15 App Router + MongoDB + Bun + Tailwind v4. Goals: drop-in env vars, develop pages in `/admin` without code changes, layout-builder pattern for blocks/heros, local-or-R2 storage with no code switch.
 
+<!-- template-only:start -->
+## Starting a New Project From This Template
+
+This repo is the template, so don't build client sites in it. When a user asks to
+"start a new project called X" or "make a new repo", run:
+
+```bash
+bun run new-project <slug> --db '<mongo-url>' [--title "Display Name"] [--repo private|public|none]
+```
+
+| Flag | Default | Notes |
+|------|---------|-------|
+| `<slug>` | required | lowercase kebab-case; becomes the folder `../<slug>`, package name, repo name, and DB name |
+| `--title` | slug in Title Case | used in the logo, footer, page titles, OG tags, seed data, README, and CLAUDE.md |
+| `--db` | blank | Mongo URL. A missing database name is filled in as `/<slug>`, and `?retryWrites=true&w=majority` is added to an `+srv` URL that has no query |
+| `--repo` | `private` | creates `<gh-user>/<slug>` with `gh` and pushes. `none` = local git only |
+
+The script copies the template to `../<slug>` without `.git`, `node_modules`,
+`.next`, `.env.local`, media, or this section. It rebrands, generates secrets,
+sets `DATABASE_URL`, runs `bun install`, makes a fresh initial commit, and
+creates the GitHub repo. The template itself is not modified.
+
+**Before running:** confirm the slug, the repo visibility, and that creating a
+GitHub repo is OK, because it's outward-facing. If the user gives a DB password
+in chat, put it only in `.env.local` (git-ignored) and suggest they rotate it.
+
+**After running**, in the new folder: `bun run build` must pass. It boots Payload,
+so the DB must be reachable. Then report the remaining `<-- FILL IN` values.
+
+### Atlas connection strings
+
+Atlas's "Connect" dialog gives you
+`mongodb+srv://<db_username>:<db_password>@cluster0.xxxx.mongodb.net/`.
+To make it usable:
+
+1. Replace `<db_username>` and `<db_password>` with real values, without the angle
+   brackets. URL-encode special characters in the password (`@` → `%40`,
+   `:` → `%3A`, `/` → `%2F`).
+2. **Add a database name** after the host. The pasted string has none, so
+   mongoose would silently write to `test`, and `src/lib/env.ts` refuses to boot.
+   Use one database per project on a shared cluster, named after the slug.
+3. Add `?retryWrites=true&w=majority`.
+
+```
+mongodb+srv://<user>:<password>@cluster0.xxxx.mongodb.net/<slug>?retryWrites=true&w=majority
+```
+
+If the connection hangs, check Atlas → Network Access. Your IP, or the deploy
+server's IP, must be allowlisted. Payload creates the database on first write,
+so you don't need to create anything in Atlas.
+<!-- template-only:end -->
+
 ## Setup (~2 min)
 
 ```bash
@@ -9,6 +61,8 @@ bun install
 cp .env.example .env.local
 bun run setup            # generates the three secrets in .env.local
 # fill in the values marked "<-- FILL IN" in .env.local
+#   DATABASE_URL → Atlas URL WITH a db name (…mongodb.net/<project>?retryWrites=true&w=majority)
+#                  or local: docker compose up -d → mongodb://127.0.0.1:27017/<project>
 docker compose up -d     # optional: local mongo:7 on 27017
 bun dev                  # → http://localhost:3000/admin
 ```
@@ -31,6 +85,7 @@ First run: create the admin user on the signup screen, then create a Page with s
 | `bun run generate:types` | Regenerate `src/payload-types.ts` after schema changes |
 | `bun run generate:importmap` | Regenerate after adding/changing admin components |
 | `bun run setup` | Generate secrets into `.env.local` (idempotent) |
+| `bun run new-project <slug>` | Clone this template into `../<slug>` as a new project (see above) |
 
 ## Environment
 
