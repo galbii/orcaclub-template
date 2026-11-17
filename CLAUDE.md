@@ -9,27 +9,48 @@ This repo is the template, so don't build client sites in it. When a user asks t
 "start a new project called X" or "make a new repo", run:
 
 ```bash
-bun run new-project <slug> --db '<mongo-url>' [--title "Display Name"] [--repo private|public|none]
+bun run new-project <slug> --db '<mongo-url>' [--title "Display Name"] [--url https://domain] [--verify] [--no-seed] [--repo none|private|public]
 ```
 
 | Flag | Default | Notes |
 |------|---------|-------|
 | `<slug>` | required | lowercase kebab-case; becomes the folder `../<slug>`, package name, repo name, and DB name |
-| `--title` | slug in Title Case | used in the logo, footer, page titles, OG tags, seed data, README, and CLAUDE.md |
+| `--title` | slug in Title Case | used in the logo, footer, page titles, OG tags, seed data, README, CLAUDE.md, and `NEXT_PUBLIC_SITE_NAME`. `/ & # '` are fine; `" \` \ $ { } < >` are refused |
+| `--url` | `http://localhost:3000` | written to `NEXT_PUBLIC_SERVER_URL` (trailing slash dropped) |
 | `--db` | blank | Mongo URL. A missing database name is filled in as `/<slug>`, and `?retryWrites=true&w=majority` is added to an `+srv` URL that has no query |
-| `--repo` | `private` | creates `<gh-user>/<slug>` with `gh` and pushes. `none` = local git only |
+| `--verify` | off | runs `bun run typecheck`, and `bun run build` when `--db` is set (the build boots Payload) |
+| `--no-seed` | off | removes the sample seed (`src/endpoints/seed/*` except `home-static.ts`, the `/next/seed` route, the Seed button and its demo user) and swaps `public/favicon.*` and `public/website-template-OG.webp` for neutral placeholders. Use it for client sites |
+| `--repo` | `none` | `private`/`public` creates `<gh-user>/<slug>` with `gh` and pushes. Outward-facing: only with an explicit OK |
 
 The script copies the template to `../<slug>` without `.git`, `node_modules`,
 `.next`, `.env.local`, media, or this section. It rebrands, generates secrets,
-sets `DATABASE_URL`, runs `bun install`, makes a fresh initial commit, and
-creates the GitHub repo. The template itself is not modified.
+sets `DATABASE_URL`, `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_SERVER_URL` (with
+`--url`) and `STORAGE_MODE` (`local` when blank), runs `bun install`, and makes
+a fresh initial commit. It ends by printing the names (never the values) of
+required env vars that are still blank. The template itself is not modified.
 
-**Before running:** confirm the slug, the repo visibility, and that creating a
-GitHub repo is OK, because it's outward-facing. If the user gives a DB password
-in chat, put it only in `.env.local` (git-ignored) and suggest they rotate it.
+**Before running:** confirm the slug and the title. Pass `--repo private|public`
+only when the user has OK'd creating a GitHub repo, because it's outward-facing.
+If the user gives a DB password in chat, put it only in `.env.local`
+(git-ignored) and suggest they rotate it.
 
-**After running**, in the new folder: `bun run build` must pass. It boots Payload,
-so the DB must be reachable. Then report the remaining `<-- FILL IN` values.
+**After running**, in the new folder: `bun run build` must pass (or use
+`--verify` with `--db`). It boots Payload, so the DB must be reachable. Then
+report the required env names the script listed as still blank.
+
+### New-project checklist
+
+| # | Step | Owner | Done when |
+|---|------|-------|-----------|
+| 1 | **Atlas**: pick the cluster, create a DB user scoped to the `<slug>` db, add the dev IP and the deploy server IP to Network Access | Chance (credentials, org access, any new-cluster cost) | Chance has the connection string |
+| 2 | **Script**: `bun run new-project <slug> --title … --url … --db … --no-seed --verify` | dev agent | the script prints `✓ … ready` |
+| 3 | **Env**: fill the required names the script listed, plus the optional integrations the site uses (Resend, analytics, R2) | Chance for secrets/keys; dev agent for non-secret names | the script's "Required env still blank" list is empty |
+| 4 | **Build**: `bun run build` passes against the real DB | dev agent | build output is green |
+| 5 | **Admin user**: create the first user on the `/admin` signup screen | dev agent locally; Chance on the production DB | you can log in to `/admin` |
+| 6 | **Home page**: create a Page with slug `home` (until then `home-static.ts` renders) | dev agent (content from the client brief) | `/` renders the CMS page |
+| 7 | **Assets**: replace `public/favicon.ico`, `public/favicon.svg` and `public/website-template-OG.webp` with the client's logo/OG; delete leftover sample media | dev agent (client assets via Chance) | no template art in `public/` or Media |
+| 8 | **GitHub repo**: rerun with `--repo private`, or `gh repo create` by hand | Chance's OK; Lucy pushes | `origin` exists |
+| 9 | **Coolify**: app, every `NEXT_PUBLIC_*` as a Build Variable, runtime env, domain, media volume or R2 | Chance (agents are read-only on Coolify) | the live URL serves the site |
 
 ### Atlas connection strings
 
@@ -85,7 +106,7 @@ First run: create the admin user on the signup screen, then create a Page with s
 | `bun run generate:types` | Regenerate `src/payload-types.ts` after schema changes |
 | `bun run generate:importmap` | Regenerate after adding/changing admin components |
 | `bun run setup` | Generate secrets into `.env.local` (idempotent) |
-| `bun run new-project <slug>` | Clone this template into `../<slug>` as a new project (see above) |
+| `bun run new-project <slug>` | Clone this template into `../<slug>` as a new project (see above; local-only by default) |
 
 ## Environment
 
